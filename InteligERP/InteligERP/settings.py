@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import yaml
+import pymysql
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,13 +77,16 @@ WSGI_APPLICATION = 'InteligERP.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+pymysql.install_as_MySQLdb()
 
+# Read YAML configuration file
+with open('.config.yaml', 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+
+# Usa congifuración
+DATABASES = {
+    'default': config['default']
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
