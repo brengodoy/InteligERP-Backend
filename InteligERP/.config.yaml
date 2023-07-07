@@ -8,4 +8,4 @@ default:
   OPTIONS:
     charset: utf8
     sql_mode: traditional
-    unix_socket: /tmp/mysql.sock
+    unix_socket:
