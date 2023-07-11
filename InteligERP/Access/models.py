@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
 """
@@ -13,4 +14,9 @@ CRUD (crear, leer, actualizar, eliminar) en los datos.
 """
 
 
-# Create your models here.
+class User(AbstractUser):
+    USERNAME_FIELD = 'email'
+    groups = models.ManyToManyField(Group, related_name='custom_user_set')
+    user_permissions = models.ManyToManyField(
+        Permission, related_name='custom_user_set'
+    )
