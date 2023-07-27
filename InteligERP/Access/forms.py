@@ -1,6 +1,6 @@
 from django import forms
-from django.contrib.auth.models import User
-from datetime import datetime
+from access.models import User
+from django.utils import timezone
 
 
 class RegisterForm(forms.ModelForm):
@@ -21,15 +21,14 @@ class RegisterForm(forms.ModelForm):
             raise forms.ValidationError("Passwords do not match.")
 
     def save(self):
-        username = self.cleaned_data['username']
         email = self.cleaned_data['email']
         password = self.cleaned_data['password']
         first_name = self.cleaned_data['first_name']
         last_name = self.cleaned_data['last_name']
         # la fecha se manda desde el front? o puede quedar así?:
-        date_joined = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        date_joined = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
         user = User.objects.create_user(
-            username=username, email=email, password=password,
+            username=email, email=email, password=password,
             first_name=first_name, last_name=last_name, date_joined=date_joined)
         return user
 

@@ -9,7 +9,9 @@ def create_user(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             form.save()
-        return JsonResponse({'success': True, 'message': 'User created successfully'})
+            return JsonResponse({'success': True, 'message': 'User created successfully'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid form data'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
@@ -18,9 +20,9 @@ def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+            user = authenticate(request, email=email, password=password)
             if user is not None:
                 login(request, user)
                 return JsonResponse({'success': True, 'message': 'User logged in successfully'})
