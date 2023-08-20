@@ -2,6 +2,13 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from access.forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect
+import yaml
+
+
+# Read YAML configuration file
+with open('.config.yaml', 'r') as yaml_file:
+    LINK = yaml.safe_load(yaml_file).get('default')['LINK']
 
 
 def create_user(request):
@@ -23,7 +30,7 @@ def login_user(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             user = authenticate(request, email=email, password=password)
-            if user is not None:
+            if user:
                 login(request, user)
                 return JsonResponse({'success': True, 'message': 'User logged in successfully'})
             else:
@@ -88,3 +95,18 @@ def adm_blank_password(request):
     user.set_password('')
     user.save()
     return JsonResponse({'success': True, 'message': 'Password updated successfully'})
+
+
+# Redirecciona a la página de registro
+def register(request):
+    return redirect(str(LINK + '/register.html'))
+
+
+# Redirecciona a la página de login
+def login(request):
+    return redirect(str(LINK + '/login.html'))
+
+
+# Redirecciona a la página de forgot password
+def forgot_password(request):
+    return redirect(str(LINK + '/forgot_password.html'))

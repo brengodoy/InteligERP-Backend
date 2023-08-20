@@ -20,8 +20,14 @@ from access import handlers
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', views.home, name='home'),
-    path('register/', handlers.create_user,
-         name='register'),  # Esto queda así?
-    # path('login/', views.login, name='login'),
+    # path('', handlers.home, name='home'),
+    path('register/', handlers.register,
+         name='register'),
+    path('login/', handlers.login, name='login'),
+    path('forgot-password/', handlers.forgot_password, name='forgot-password'),
+
+    # Ver que onda con redirigir páginas del FE con el BE
+    path('register-user/', handlers.create_user, name='register-user'),
+    path('login-user/', handlers.login_user, name='login-user'),
+    path('update-password/', handlers.update_password, name='set-password'),
 ]
