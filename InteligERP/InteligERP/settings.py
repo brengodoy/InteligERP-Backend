@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'InteligERP.wsgi.application'
 pymysql.install_as_MySQLdb()
 
 # Read YAML configuration file
-with open('.config.yaml', 'r') as yaml_file:
+with open('config.yaml', 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 
 # Usa congifuración

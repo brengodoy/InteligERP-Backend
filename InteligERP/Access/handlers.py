@@ -7,7 +7,7 @@ import yaml
 
 
 # Read YAML configuration file
-with open('.config.yaml', 'r') as yaml_file:
+with open('config.yaml', 'r') as yaml_file:
     LINK = yaml.safe_load(yaml_file).get('default')['LINK']
 
 

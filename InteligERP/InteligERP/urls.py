@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from access import handlers
+from stakeholders import handlers
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,6 +26,16 @@ urlpatterns = [
          name='register'),
     path('login/', handlers.login, name='login'),
     path('forgot-password/', handlers.forgot_password, name='forgot-password'),
+
+    path('create-client/', handlers.create_client, name='create-client'),
+    path('update-client/', handlers.update_client, name='update-client'),
+    path('get-client/', handlers.get_client, name='get-client'),
+    path('get-all-clients/', handlers.get_all_clients, name='get-all-clients'),
+
+    path('create-supplier/', handlers.create_supplier, name='create-supplier'),
+    path('update-supplier/', handlers.update_supplier, name='update-supplier'),
+    path('get-supplier/', handlers.get_supplier, name='get-supplier'),
+    path('get-all-supplier/', handlers.get_all_suppliers, name='get-all-supplier'),
 
     # Ver que onda con redirigir páginas del FE con el BE
     path('register-user/', handlers.create_user, name='register-user'),

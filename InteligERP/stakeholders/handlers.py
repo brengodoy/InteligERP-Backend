@@ -36,7 +36,6 @@ def get_client(request):
     return JsonResponse({'first_name': client.first_name,
                          'last_name': client.last_name,
                          'address': client.address })
-                         #'is_superuser': client.is_superuser, 'is_staff': client.is_staff})
 
 def get_all_clients(request):
     clients = Client.objects.all()
@@ -47,22 +46,32 @@ def get_all_clients(request):
                          	'address': client.address})
     return JsonResponse({'users': client_list})
 
-def delete_client(request):
-    client = Client.objects.get(cuil=request.POST.get('CUIL'))
-    client.delete()
-    return JsonResponse({'success': True, 'message': 'Client deleted successfully'})
+def create_supplier(request):
+    if request.method == 'POST':
+        form = CreateSupplierForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Supplier created successfully'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid form data'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+def update_supplier(request):
+    supplier = Supplier.objects.get(cuit=request.POST.get('CUIT'))
+    supplier.company_name = request.POST.get('company_name')
+    supplier.save()
+    return JsonResponse({'success': True, 'message': 'Supplier updated successfully'})
 
-# Redirecciona a la página de registro
-def register(request):
-    return redirect(str(LINK + '/register.html'))
+def get_supplier(request):
+    supplier = Supplier.objects.get(cuit=request.POST.get('CUIT'))
+    return JsonResponse({'company_name': supplier.company_name,
+                         'CUIT': supplier.cuit})
 
-
-# Redirecciona a la página de login
-def login(request):
-    return redirect(str(LINK + '/login.html'))
-
-
-# Redirecciona a la página de forgot password
-def forgot_password(request):
-    return redirect(str(LINK + '/forgot_password.html'))
+def get_all_suppliers(request):
+    suppliers = Supplier.objects.all()
+    supplier_list = []
+    for supplier in suppliers:
+        supplier_list.append({'company_name': supplier.company_name,
+                         	'CUIT': supplier.cuit})
+    return JsonResponse({'users': supplier_list})
