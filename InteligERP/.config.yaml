@@ -3,9 +3,9 @@ default:
   ENGINE: django.db.backends.mysql
   NAME: ERPdb
   USER: root
-  PASSWORD: '123456789'
+  PASSWORD: ''
   HOST: localhost
-  PORT: 3306
+  PORT: 3307
   OPTIONS:
     charset: utf8
     sql_mode: traditional
