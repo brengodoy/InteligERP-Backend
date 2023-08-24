@@ -44,16 +44,9 @@ class LoginForm(forms.ModelForm):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
         password = cleaned_data.get('password')
-
         if not User.objects.filter(email=email).exists():
             raise forms.ValidationError("User does not exist.")
 
         user = User.objects.get(email=email)
         if not user.check_password(password):
             raise forms.ValidationError("Incorrect password.")
-
-    def save(self):
-        email = self.cleaned_data['email']
-        password = self.cleaned_data['password']
-        user = User.objects.get(email=email)
-        return user

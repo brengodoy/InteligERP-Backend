@@ -26,6 +26,9 @@ def create_user(request):
 def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
+        print(form.data)
+        print("##################")
+        print(form.is_valid())
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -36,9 +39,19 @@ def login_user(request):
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid credentials'})
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid form data'})
+            # Agrega un mensaje de error personalizado
+            errors = form.errors.as_json()
+            return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+
+def update_user(request):
+    user = User.objects.get(email=request.POST.get('email'))
+    user.first_name = request.POST.get('first_name')
+    user.last_name = request.POST.get('last_name')
+    user.save()
+    return JsonResponse({'success': True, 'message': 'User updated successfully'})
 
 
 def get_user(request):
@@ -54,14 +67,6 @@ def get_all_users(request):
         user_list.append({'name': user.first_name, 'email': user.email,
                           'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
     return JsonResponse({'users': user_list})
-
-
-def update_user(request):
-    user = User.objects.get(email=request.POST.get('email'))
-    user.first_name = request.POST.get('first_name')
-    user.last_name = request.POST.get('last_name')
-    user.save()
-    return JsonResponse({'success': True, 'message': 'User updated successfully'})
 
 
 def update_password(request):
@@ -95,18 +100,3 @@ def adm_blank_password(request):
     user.set_password('')
     user.save()
     return JsonResponse({'success': True, 'message': 'Password updated successfully'})
-
-
-# Redirecciona a la página de registro
-def register(request):
-    return redirect(str(LINK + '/register.html'))
-
-
-# Redirecciona a la página de login
-def login(request):
-    return redirect(str(LINK + '/login.html'))
-
-
-# Redirecciona a la página de forgot password
-def forgot_password(request):
-    return redirect(str(LINK + '/forgot_password.html'))

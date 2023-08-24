@@ -16,29 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from access import handlers
-from stakeholders import handlers
+from access import handlers as access
+from stakeholders import handlers as stakeholders
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', handlers.home, name='home'),
-    path('register/', handlers.register,
-         name='register'),
-    path('login/', handlers.login, name='login'),
-    path('forgot-password/', handlers.forgot_password, name='forgot-password'),
 
-    path('create-client/', handlers.create_client, name='create-client'),
-    path('update-client/', handlers.update_client, name='update-client'),
-    path('get-client/', handlers.get_client, name='get-client'),
-    path('get-all-clients/', handlers.get_all_clients, name='get-all-clients'),
+    path('register-user/', access.create_user, name='register-user'),
+    path('login-user/', access.login_user, name='login-user'),
+    path('update-password/', access.update_password, name='set-password'),
 
-    path('create-supplier/', handlers.create_supplier, name='create-supplier'),
-    path('update-supplier/', handlers.update_supplier, name='update-supplier'),
-    path('get-supplier/', handlers.get_supplier, name='get-supplier'),
-    path('get-all-supplier/', handlers.get_all_suppliers, name='get-all-supplier'),
+    path('create-client/', stakeholders.create_client, name='create-client'),
+    path('update-client/', stakeholders.update_client, name='update-client'),
+    path('get-client/', stakeholders.get_client, name='get-client'),
+    path('get-all-clients/', stakeholders.get_all_clients, name='get-all-clients'),
 
-    # Ver que onda con redirigir páginas del FE con el BE
-    path('register-user/', handlers.create_user, name='register-user'),
-    path('login-user/', handlers.login_user, name='login-user'),
-    path('update-password/', handlers.update_password, name='set-password'),
+    path('create-supplier/', stakeholders.create_supplier, name='create-supplier'),
+    path('update-supplier/', stakeholders.update_supplier, name='update-supplier'),
+    path('get-supplier/', stakeholders.get_supplier, name='get-supplier'),
+    path('get-all-supplier/', stakeholders.get_all_suppliers,
+         name='get-all-supplier'),
+
 ]
