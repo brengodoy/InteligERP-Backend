@@ -18,7 +18,8 @@ def create_client(request):
             form.save()
             return JsonResponse({'success': True, 'message': 'Client created successfully'})
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid form data'})
+            errors = form.errors.as_json()
+            return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
