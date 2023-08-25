@@ -21,6 +21,7 @@ from stakeholders import handlers as stakeholders
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # path('', access.admin),
 
     path('register-user/', access.create_user, name='register-user'),
     path('login-user/', access.login_user, name='login-user'),
