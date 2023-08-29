@@ -18,7 +18,8 @@ def create_user(request):
             form.save()
             return JsonResponse({'success': True, 'message': 'User created successfully'})
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid form data'})
+            errors = form.errors.as_json()
+            return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
@@ -26,13 +27,11 @@ def create_user(request):
 def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
-        print(form.data)
-        print("##################")
-        print(form.is_valid())
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(request, email=email, password=password)
+            user = authenticate(
+                request, username=email, email=email, password=password)
             if user:
                 login(request, user)
                 return JsonResponse({'success': True, 'message': 'User logged in successfully'})
