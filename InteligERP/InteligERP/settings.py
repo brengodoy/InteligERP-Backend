@@ -28,7 +28,11 @@ SECRET_KEY = 'django-insecure-(1+p#8ns5r7#mzi5cwnq_n&fr5qy^fkxgd)w6f8d5!)rr_hzda
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    'localhost:3000',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -40,13 +44,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'access',
     'stakeholders',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',  # Agrega los dominios permitidos aquí
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',  Hay que descomentar esta línea para la Verificación de CSRF!
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -131,3 +141,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# JWT token used for login in feature
+REST_USE_JWT = True
+AUTHENTICATION_BACKENDS = [
+    # 'access',
+    'django.contrib.auth.backends.ModelBackend',
+]

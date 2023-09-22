@@ -8,10 +8,11 @@ from django.contrib.auth import authenticate
 # Hacer una clase de formulario para registrar un usuario con UserCreationForm
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(max_length=200, help_text='Required')
+    username = forms.CharField(max_length=30)
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'email', 'password1', 'password2', 'username']
 
     def clean_email(self):
         email = self.cleaned_data['email']
@@ -37,7 +38,7 @@ class RegisterForm(UserCreationForm):
     def save(self, commit=True):
         user = super(RegisterForm, self).save(commit=False)
         user.email = self.cleaned_data['email']
-        user.username = self.cleaned_data['email']
+        user.username = self.cleaned_data['username']
         user.date_joined = timezone.now()
         if commit:
             user.save()
@@ -55,9 +56,6 @@ class RegisterForm(UserCreationForm):
 #         return user
 
 
-class LoginForm(forms.ModelForm):
+class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
-
-    class Meta:
-        model = User
-        fields = ['email', 'password']
+    email = forms.CharField(widget=forms.EmailInput)

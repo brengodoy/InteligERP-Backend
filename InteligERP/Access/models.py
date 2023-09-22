@@ -15,9 +15,9 @@ CRUD (crear, leer, actualizar, eliminar) en los datos.
 
 
 class User(AbstractUser):
-    # USERNAME_FIELD = 'email'
+    email = models.EmailField(unique=True)
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-    email = models.EmailField()
     groups = models.ManyToManyField(Group, related_name='custom_user_set')
     user_permissions = models.ManyToManyField(
         Permission, related_name='custom_user_set'

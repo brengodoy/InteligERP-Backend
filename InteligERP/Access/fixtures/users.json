@@ -1,0 +1,24 @@
+[
+    {
+      "model": "access.User",
+      "fields": {
+        "password": "tincho",
+        "is_superuser": 1,
+        "username": "tinchoabc",
+        "first_name": "Martin",
+        "last_name": "Ballestero",
+        "email": "mb@mail.com"
+      }
+    },
+    {
+        "model": "access.User",
+        "fields": {
+          "password": "John",
+          "is_superuser": 0,
+          "username": "johndoe",
+          "first_name": "John",
+          "last_name": "Doe",
+          "email": "john@mail.com"
+        }
+    }
+  ]

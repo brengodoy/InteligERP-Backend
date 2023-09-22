@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from access.forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import redirect
 import yaml
 
@@ -30,11 +31,16 @@ def login_user(request):
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(
-                request, username=email, email=email, password=password)
+            user = authenticate(request, username=email, email=email, password=password)
             if user:
                 login(request, user)
-                return JsonResponse({'success': True, 'message': 'User logged in successfully'})
+                # Generar el token JWT
+                refresh = RefreshToken.for_user(user)
+                token = {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+                return JsonResponse({'success': True, 'message': 'User logged in successfully', 'token': token})
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid credentials'})
         else:
