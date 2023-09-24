@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import yaml
 import pymysql
+from datetime import timedelta
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'access',
     'stakeholders',
+    'rest_framework_simplejwt',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -143,8 +145,13 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # JWT token used for login in feature
-REST_USE_JWT = True
-AUTHENTICATION_BACKENDS = [
-    # 'access',
-    'django.contrib.auth.backends.ModelBackend',
-]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}

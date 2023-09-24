@@ -18,13 +18,18 @@ from django.contrib import admin
 from django.urls import path
 from access import handlers as access
 from stakeholders import handlers as stakeholders
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('', access.admin),
 
     path('signup/', access.create_user, name='signup'),
-    path('signin', access.login_user, name='signin'),
+    path('me', access.identify_user, name='me'),
+    path('signin', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+
     path('update-password/', access.update_password, name='set-password'),
 
     path('create-client/', stakeholders.create_client, name='create-client'),

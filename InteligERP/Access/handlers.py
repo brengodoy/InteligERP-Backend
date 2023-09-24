@@ -1,9 +1,11 @@
 from django.http import JsonResponse
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+# from django.contrib.auth.models import User
+# En settings.py se definiió un nuevo modelo de User bajo la variable de configuración AUTH_USER_MODEL.
 from access.forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.shortcuts import redirect
+from .decorators import token_required
 import yaml
 
 
@@ -50,6 +52,12 @@ def login_user(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+@token_required
+def identify_user(request, user_id):
+    User = get_user_model()
+    user = User.objects.get(id=user_id)
+    return JsonResponse({'name': user.first_name, 'email': user.email,
+                         'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
 
 def update_user(request):
     user = User.objects.get(email=request.POST.get('email'))
