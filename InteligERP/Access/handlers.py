@@ -38,9 +38,9 @@ def login_user(request):
                 refresh = RefreshToken.for_user(user)
                 token = {
                     'refresh': str(refresh),
-                    'access': str(refresh.access_token),
+                    'access': str(refresh.access_token)
                 }
-                return JsonResponse({'success': True, 'message': 'User logged in successfully', 'token': token})
+                return JsonResponse({'success': True, 'message': 'User logged in successfully', 'token': token, 'data': user.get_info()})
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid credentials'})
         else:
@@ -53,8 +53,7 @@ def login_user(request):
 @token_required
 def identify_user(request, user_id):
     user = User.objects.get(id=user_id)
-    return JsonResponse({'name': user.first_name, 'email': user.email,
-                         'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
+    return JsonResponse(user.get_info())
 
 @token_required
 def update_user(request):
@@ -67,16 +66,14 @@ def update_user(request):
 @token_required
 def get_user(request):
     user = User.objects.get(email=request.POST.get('email'))
-    return JsonResponse({'name': user.first_name, 'email': user.email,
-                         'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
+    return JsonResponse(user.get_info())
 
 @token_required
 def get_all_users(request):
     users = User.objects.all()
     user_list = []
     for user in users:
-        user_list.append({'name': user.first_name, 'email': user.email,
-                          'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
+        user_list.append(user.get_info())
     return JsonResponse({'users': user_list})
 
 @token_required

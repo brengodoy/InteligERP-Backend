@@ -22,3 +22,7 @@ class User(AbstractUser):
     user_permissions = models.ManyToManyField(
         Permission, related_name='custom_user_set'
     )
+
+    def get_info(self):
+        return {'name': self.first_name, 'email': self.email,
+                         'is_superuser': self.is_superuser, 'is_staff': self.is_staff}
