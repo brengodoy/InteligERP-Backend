@@ -1,7 +1,5 @@
 from django.http import JsonResponse
-from django.contrib.auth import get_user_model
-# from django.contrib.auth.models import User
-# En settings.py se definiió un nuevo modelo de User bajo la variable de configuración AUTH_USER_MODEL.
+from .models import User
 from access.forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -54,11 +52,11 @@ def login_user(request):
 
 @token_required
 def identify_user(request, user_id):
-    User = get_user_model()
     user = User.objects.get(id=user_id)
     return JsonResponse({'name': user.first_name, 'email': user.email,
                          'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
 
+@token_required
 def update_user(request):
     user = User.objects.get(email=request.POST.get('email'))
     user.first_name = request.POST.get('first_name')
@@ -66,13 +64,13 @@ def update_user(request):
     user.save()
     return JsonResponse({'success': True, 'message': 'User updated successfully'})
 
-
+@token_required
 def get_user(request):
     user = User.objects.get(email=request.POST.get('email'))
     return JsonResponse({'name': user.first_name, 'email': user.email,
                          'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
 
-
+@token_required
 def get_all_users(request):
     users = User.objects.all()
     user_list = []
@@ -81,14 +79,14 @@ def get_all_users(request):
                           'is_superuser': user.is_superuser, 'is_staff': user.is_staff})
     return JsonResponse({'users': user_list})
 
-
+@token_required
 def update_password(request):
     user = User.objects.get(email=request.POST.get('email'))
     user.set_password(request.POST.get('password'))
     user.save()
     return JsonResponse({'success': True, 'message': 'Password updated successfully'})
 
-
+@token_required
 def delete_user(request):
     user = User.objects.get(email=request.POST.get('email'))
     user.delete()
@@ -96,6 +94,7 @@ def delete_user(request):
 
 
 # Falta validar que el usuario loggeado sea superuser
+@token_required
 def adm_update_user(request):
     user = User.objects.get(email=request.POST.get('email'))
     user.first_name = request.POST.get('first_name')
@@ -108,6 +107,7 @@ def adm_update_user(request):
 
 
 # Falta validar que el usuario loggeado sea superuser
+@token_required
 def adm_blank_password(request):
     user = User.objects.get(email=request.POST.get('email'))
     user.set_password('')
