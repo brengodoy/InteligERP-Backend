@@ -39,8 +39,8 @@ urlpatterns = [
     path('create-supplier/', stakeholders.create_supplier, name='create-supplier'),
     path('update-supplier/', stakeholders.update_supplier, name='update-supplier'),
     path('get-supplier/', stakeholders.get_supplier, name='get-supplier'),
-    path('get-all-supplier/', stakeholders.get_all_suppliers,
-         name='get-all-supplier'),
+    path('get-all-suppliers/', stakeholders.get_all_suppliers,name='get-all-supplier'),
+    path('delete-supplier/', stakeholders.delete_supplier,name='delete-supplier'),
 		 
     path('create-warehouse/', warehouses.create_warehouse, name='create-warehouse'),
     path('update-warehouse/', warehouses.update_warehouse, name='update-warehouse'),

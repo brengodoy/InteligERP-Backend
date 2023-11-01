@@ -90,28 +90,61 @@ def create_supplier(request):
             form.save()
             return JsonResponse({'success': True, 'message': 'Supplier created successfully'})
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid form data'})
+            errors = form.errors.as_json()
+            error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
+            if 'CUIT' in error_dict:
+                return JsonResponse({'success': False, 'message': 'CUIT already exists'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
 def update_supplier(request):
-    supplier = Supplier.objects.get(cuit=request.POST.get('CUIT'))
-    supplier.company_name = request.POST.get('company_name')
-    supplier.save()
-    return JsonResponse({'success': True, 'message': 'Supplier updated successfully'})
-
+    if request.method == 'POST':
+        cuit = request.GET.get('CUIT')
+        try:
+            supplier = Supplier.objects.get(CUIT=cuit)
+            if 'company_name' in request.POST:
+                supplier.company_name = request.POST.get('company_name')
+            supplier.save()
+            return JsonResponse({'success': True, 'message': 'Supplier updated successfully'})
+        except Supplier.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Supplier does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def get_supplier(request):
-    supplier = Supplier.objects.get(cuit=request.POST.get('CUIT'))
-    return JsonResponse({'company_name': supplier.company_name,
-                         'CUIT': supplier.cuit})
-
+    if request.method == 'GET':
+        cuit = request.GET.get('CUIT')
+        try:
+            supplier = Supplier.objects.get(CUIT=cuit)
+            return JsonResponse({'company_name': supplier.company_name,
+                                 'CUIT': supplier.CUIT})
+        except Supplier.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Supplier does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def get_all_suppliers(request):
-    suppliers = Supplier.objects.all()
-    supplier_list = []
-    for supplier in suppliers:
-        supplier_list.append({'company_name': supplier.company_name,
-                              'CUIT': supplier.cuit})
-    return JsonResponse({'users': supplier_list})
+    if request.method == 'GET':
+        suppliers = Supplier.objects.all()
+        supplier_list = []
+        for supplier in suppliers:
+            supplier_list.append({'company_name': supplier.company_name,
+                                  'CUIT': supplier.CUIT})
+        return JsonResponse({'suppliers': supplier_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def delete_supplier(request):
+    if request.method == 'POST':
+        cuit = request.POST.get('CUIT')
+        try:
+            supplier = Supplier.objects.get(CUIT=cuit)
+            supplier.delete()
+            return JsonResponse({'success': True, 'message': 'Supplier deleted successfully'})
+        except Supplier.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Supplier does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
