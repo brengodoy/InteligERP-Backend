@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from access import handlers as access
 from stakeholders import handlers as stakeholders
+from storage import handlers as warehouses
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -39,5 +40,11 @@ urlpatterns = [
     path('get-supplier/', stakeholders.get_supplier, name='get-supplier'),
     path('get-all-supplier/', stakeholders.get_all_suppliers,
          name='get-all-supplier'),
+		 
+    path('create-warehouse/', warehouses.create_warehouse, name='create-warehouse'),
+    path('update-warehouse/', warehouses.update_warehouse, name='update-warehouse'),
+    path('get-warehouse/', warehouses.get_warehouse, name='get-warehouse'),
+    path('get-all-warehouses/', warehouses.get_all_warehouses,name='get-all-warehouses'),
+    path('delete-warehouse/', warehouses.delete_warehouse,name='delete-warehouse'),
 
 ]

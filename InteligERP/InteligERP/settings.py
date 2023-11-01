@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'access',
     'stakeholders',
     'rest_framework_simplejwt',
+    'storage',
 ]
 
 CORS_ALLOWED_ORIGINS = [
