@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from access import handlers as access
 from stakeholders import handlers as stakeholders
-from storage import handlers as warehouses
+from storage import handlers as storage
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,10 +42,16 @@ urlpatterns = [
     path('get-all-suppliers/', stakeholders.get_all_suppliers,name='get-all-supplier'),
     path('delete-supplier/', stakeholders.delete_supplier,name='delete-supplier'),
 		 
-    path('create-warehouse/', warehouses.create_warehouse, name='create-warehouse'),
-    path('update-warehouse/', warehouses.update_warehouse, name='update-warehouse'),
-    path('get-warehouse/', warehouses.get_warehouse, name='get-warehouse'),
-    path('get-all-warehouses/', warehouses.get_all_warehouses,name='get-all-warehouses'),
-    path('delete-warehouse/', warehouses.delete_warehouse,name='delete-warehouse'),
+    path('create-warehouse/', storage.create_warehouse, name='create-warehouse'),
+    path('update-warehouse/', storage.update_warehouse, name='update-warehouse'),
+    path('get-warehouse/', storage.get_warehouse, name='get-warehouse'),
+    path('get-all-warehouses/', storage.get_all_warehouses,name='get-all-warehouses'),
+    path('delete-warehouse/', storage.delete_warehouse,name='delete-warehouse'),
+	
+    path('create-section/', storage.create_section, name='create-section'),
+	path('get-section/', storage.get_section, name='get-section'),
+	path('get-all-sections/', storage.get_all_sections, name='get-all-sections'),
+	path('update-section/', storage.update_section, name='update-section'),
+	path('delete-section/', storage.delete_section, name='delete-section'),
 
 ]
