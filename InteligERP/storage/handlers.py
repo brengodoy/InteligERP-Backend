@@ -9,7 +9,6 @@ import yaml
 with open('config.yaml', 'r') as yaml_file:
     LINK = yaml.safe_load(yaml_file).get('default')['LINK']
 
-
 def create_warehouse(request):
     if request.method == 'POST':
         form = CreateWarehouseForm(request.POST)
@@ -39,20 +38,6 @@ def update_warehouse(request):
             return JsonResponse({'success': False, 'message': 'Warehouse does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-"""def update_warehouse(request):
-    if request.method == 'PUT':
-        warehouse_id = request.GET.get('id_warehouse')
-        try:
-               warehouse = Warehouse.objects.get(id_warehouse=warehouse_id)
-               warehouse.name = request.GET.get('name')
-               warehouse.address = request.GET.get('address')
-               warehouse.description = request.GET.get('description')
-               warehouse.save()
-               return JsonResponse({'success': True, 'message': 'Warehouse updated successfully'})
-        except Warehouse.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Warehouse does not exist'})
-    else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})"""
 
 def get_warehouse(request):
     if request.method == 'GET':
@@ -67,12 +52,6 @@ def get_warehouse(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-"""def get_warehouse(request):
-    warehouse = Warehouse.objects.get(id_warehouse=request.POST.get('id_warehouse'))
-    return JsonResponse({'name': warehouse.name,
-                         'address': warehouse.address,
-                         'description': warehouse.description})"""
-
 def get_all_warehouses(request):
     warehouses = Warehouse.objects.all()
     warehouse_list = []
@@ -80,13 +59,13 @@ def get_all_warehouses(request):
         warehouse_list.append({'name': warehouse.name,
                          	   'address': warehouse.address,
                          	   'description': warehouse.description})
-    return JsonResponse({'users': warehouse_list})
+    return JsonResponse({'warehouses': warehouse_list})
 
 def delete_warehouse(request):
     if request.method == 'POST':
         id_warehouse = request.POST.get('id_warehouse')
         try:
-            warehouse = Warehouse.objects.get(cuil=id_warehouse)
+            warehouse = Warehouse.objects.get(id_warehouse=id_warehouse)
             warehouse.delete()
             return JsonResponse({'success': True, 'message': 'Warehouse deleted successfully'})
         except Warehouse.DoesNotExist:
