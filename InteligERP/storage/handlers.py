@@ -23,9 +23,11 @@ def create_warehouse(request):
 
 def update_warehouse(request):
     if request.method == 'POST':
-        warehouse_id = request.GET.get('id_warehouse')
+        id = request.GET.get('id')
         try:
-            warehouse = Warehouse.objects.get(id_warehouse=warehouse_id)
+            warehouse = Warehouse.objects.get(id=id)
+            if 'id_warehouse' in request.POST:
+                warehouse.id_warehouse = request.POST.get('id_warehouse')
             if 'name' in request.POST:
                 warehouse.name = request.POST.get('name')
             if 'address' in request.POST:
@@ -41,9 +43,9 @@ def update_warehouse(request):
 
 def get_warehouse(request):
     if request.method == 'GET':
-        warehouse_id = request.GET.get('id_warehouse')
+        id = request.GET.get('id')
         try:
-            warehouse = Warehouse.objects.get(id_warehouse=warehouse_id)
+            warehouse = Warehouse.objects.get(id=id)
             return JsonResponse({'name': warehouse.name,
                                  'address': warehouse.address,
                                  'description': warehouse.description})
