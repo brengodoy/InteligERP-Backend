@@ -5,8 +5,8 @@ class Client(models.Model):
     # Campos del modelo para Client
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    address = models.CharField(max_length=100)
-    CUIL = models.CharField(max_length=11)
+    address = models.CharField(max_length=100,null=True)
+    CUIL = models.CharField(max_length=11,unique=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -14,7 +14,7 @@ class Client(models.Model):
 class Supplier(models.Model):
     # Campos del modelo para Supplier
     company_name = models.CharField(max_length=255)
-    CUIT = models.CharField(max_length=11)
+    CUIT = models.CharField(max_length=11,unique=True)
 
     def __str__(self):
         return self.company_name

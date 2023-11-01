@@ -53,13 +53,16 @@ def get_warehouse(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def get_all_warehouses(request):
-    warehouses = Warehouse.objects.all()
-    warehouse_list = []
-    for warehouse in warehouses:
-        warehouse_list.append({'name': warehouse.name,
-                         	   'address': warehouse.address,
-                         	   'description': warehouse.description})
-    return JsonResponse({'warehouses': warehouse_list})
+    if request.method == 'GET':
+        warehouses = Warehouse.objects.all()
+        warehouse_list = []
+        for warehouse in warehouses:
+            warehouse_list.append({'name': warehouse.name,
+                                'address': warehouse.address,
+                                'description': warehouse.description})
+        return JsonResponse({'warehouses': warehouse_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def delete_warehouse(request):
     if request.method == 'POST':

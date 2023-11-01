@@ -34,6 +34,7 @@ urlpatterns = [
     path('update-client/', stakeholders.update_client, name='update-client'),
     path('get-client/', stakeholders.get_client, name='get-client'),
     path('get-all-clients/', stakeholders.get_all_clients, name='get-all-clients'),
+	path('delete-client/', stakeholders.delete_client, name='delete-client'),
 
     path('create-supplier/', stakeholders.create_supplier, name='create-supplier'),
     path('update-supplier/', stakeholders.update_supplier, name='update-supplier'),
