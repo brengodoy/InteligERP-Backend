@@ -55,5 +55,9 @@ urlpatterns = [
 	path('delete-section/', storage.delete_section, name='delete-section'),
 	
     path('create-object/', objects.create_object, name='create-object'),
+	path('get-object/', objects.get_object, name='get-object'),
+	path('get-all-objects/', objects.get_all_objects, name='get-all-objects'),
+	path('update-object/', objects.update_object, name='update-object'),
+	path('delete-object/', objects.delete_object, name='delete-object'),
 
 ]

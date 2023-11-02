@@ -6,4 +6,4 @@ class CreateObjectForm(forms.ModelForm):
 
     class Meta:
         model = Object
-        fields = ['product_id','name','height','length','width','weight']
+        fields = ['product_id','name','height','length','width','weight','supplier','section']
