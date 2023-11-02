@@ -10,8 +10,8 @@ class Warehouse(models.Model):
 class Section(models.Model):
 	warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE,verbose_name="the related warehouse",default=1)
 	id_section = models.IntegerField(null=True)
-	height = models.IntegerField()
-	length = models.IntegerField()
-	width = models.IntegerField()
-	max_weight = models.IntegerField(null=True)
+	height = models.DecimalField(max_digits=20,decimal_places=3)
+	length = models.DecimalField(max_digits=20,decimal_places=3)
+	width = models.DecimalField(max_digits=20,decimal_places=3)
+	max_weight = models.DecimalField(max_digits=20,decimal_places=3,null=True)
 	description = models.CharField(max_length=300,null=True)

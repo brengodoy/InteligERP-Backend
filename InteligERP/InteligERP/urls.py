@@ -19,6 +19,7 @@ from django.urls import path
 from access import handlers as access
 from stakeholders import handlers as stakeholders
 from storage import handlers as storage
+from products import handlers as objects
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,7 +28,6 @@ urlpatterns = [
     path('signup/', access.create_user, name='signup'),
     path('me', access.identify_user, name='me'),
     path('signin', access.login_user, name='login_user'),
-
     path('update-password/', access.update_password, name='set-password'),
 
     path('create-client/', stakeholders.create_client, name='create-client'),
@@ -53,5 +53,7 @@ urlpatterns = [
 	path('get-all-sections/', storage.get_all_sections, name='get-all-sections'),
 	path('update-section/', storage.update_section, name='update-section'),
 	path('delete-section/', storage.delete_section, name='delete-section'),
+	
+    path('create-object/', objects.create_object, name='create-object'),
 
 ]
