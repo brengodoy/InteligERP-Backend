@@ -20,6 +20,7 @@ from access import handlers as access
 from stakeholders import handlers as stakeholders
 from storage import handlers as storage
 from products import handlers as objects
+from transactions import handlers as transactions
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -63,5 +64,11 @@ urlpatterns = [
     path('create-price/', objects.create_price, name='create-price'),
 	path('get-price/', objects.get_price, name='get-price'),
 	path('delete-price/', objects.delete_price, name='delete-price'),
+	
+    path('create-sale/', transactions.create_sale, name='create-sale'),
+	path('get-sale/', transactions.get_sale, name='get-sale'),
+	path('get-all-sales/', transactions.get_all_sales, name='get-all-sales'),
+	path('update-sale/', transactions.update_sale, name='update-sale'),
+	path('delete-sale/', transactions.delete_sale, name='delete-sale'),
 
 ]

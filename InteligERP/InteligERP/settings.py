@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'storage',
     'products',
+    'transactions',
 ]
 
 CORS_ALLOWED_ORIGINS = [

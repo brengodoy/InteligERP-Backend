@@ -1,8 +1,6 @@
 from django.http import JsonResponse
 from .models import Object,Price
 from .forms import CreateObjectForm,CreatePriceForm
-from django.contrib.auth import authenticate, login
-from django.shortcuts import redirect
 import yaml,json
 from stakeholders.models import Supplier
 from django.db.models import Max
