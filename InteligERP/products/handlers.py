@@ -1,10 +1,11 @@
 from django.http import JsonResponse
-from .models import Object
+from .models import Object,Price
 from .forms import CreateObjectForm,CreatePriceForm
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
 import yaml,json
 from stakeholders.models import Supplier
+from django.db.models import Max
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -123,5 +124,48 @@ def create_price(request):
                 return JsonResponse({'success': False, 'message': 'This datetime already exist for this object.'})
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_price(request):
+    if request.method == 'GET':
+        id_object = request.GET.get('id_object')
+        supplier_ids = request.GET.getlist('supplier_ids')
+        try:
+            object = Object.objects.get(id=id_object)
+            if not supplier_ids:
+                prices = Price.objects.filter(object=object).values('supplier').annotate(max_date=Max('date')).values('supplier', 'max_date')
+            else:
+                prices = Price.objects.filter(object=object, supplier_id__in=supplier_ids).values('supplier').annotate(max_date=Max('date')).values('supplier', 'max_date')
+
+            price_data = []
+            for price in prices:
+                if not supplier_ids:
+                    latest_price = Price.objects.filter(object=object, supplier_id=price['supplier'], date=price['max_date']).first()
+                else:
+                    latest_price = Price.objects.filter(object=object, supplier_id=price['supplier'], date=price['max_date']).first()
+
+                price_data.append({
+                    'name': object.name,
+                    'price': latest_price.price,
+                    'date': latest_price.date,
+                    'currency': latest_price.currency,
+                    'supplier': latest_price.supplier.id
+                })
+            return JsonResponse(price_data, safe=False)
+        except Object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def delete_price(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        try:
+            price = Price.objects.get(id=id)
+            price.delete()
+            return JsonResponse({'success': True, 'message': 'Price deleted successfully'})
+        except Object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Price does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})

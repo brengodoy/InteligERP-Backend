@@ -61,5 +61,7 @@ urlpatterns = [
 	path('delete-object/', objects.delete_object, name='delete-object'),
 	
     path('create-price/', objects.create_price, name='create-price'),
+	path('get-price/', objects.get_price, name='get-price'),
+	path('delete-price/', objects.delete_price, name='delete-price'),
 
 ]
