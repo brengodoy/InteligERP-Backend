@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from .models import Object
-from .forms import CreateObjectForm
+from .forms import CreateObjectForm,CreatePriceForm
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
 import yaml,json
@@ -21,8 +21,6 @@ def create_object(request):
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
             if 'product_id' in error_dict:
                 return JsonResponse({'success': False, 'message': 'The product_id entered already exist.'})
-            elif 'supplier' in error_dict:
-                return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
             elif 'section' in error_dict:
                 return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
             else:
@@ -42,7 +40,6 @@ def get_object(request):
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
-                                 'supplier': object.supplier.id,
                                  'section': object.section.id})
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
@@ -61,7 +58,6 @@ def get_all_objects(request):
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
-                                 'supplier': object.supplier.id,
                                  'section': object.section.id})
         return JsonResponse({'objects': object_list})
     else:
@@ -72,13 +68,6 @@ def update_object(request):
         id = request.GET.get('id')
         try:
             object = Object.objects.get(id=id)
-            if 'supplier' in request.POST:
-                try:
-                    id_supplier = request.POST.get('supplier')
-                    supplier = Supplier.objects.get(id=id_supplier)
-                    object.supplier = supplier
-                except Supplier.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
             if 'section' in request.POST:
                 try:
                     id_section = request.POST.get('section')
@@ -114,5 +103,25 @@ def delete_object(request):
             return JsonResponse({'success': True, 'message': 'Object deleted successfully'})
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def create_price(request):
+    if request.method == 'POST':
+        form = CreatePriceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Price created successfully'})
+        else:
+            errors = form.errors.as_json()
+            error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
+            if 'object' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
+            elif 'supplier' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
+            elif '__all__' in error_dict:
+                return JsonResponse({'success': False, 'message': 'This datetime already exist for this object.'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})

@@ -12,11 +12,16 @@ class Object(models.Model):
 	length = models.DecimalField(max_digits=20,decimal_places=3)
 	width = models.DecimalField(max_digits=20,decimal_places=3)
 	weight = models.DecimalField(max_digits=20,decimal_places=3)
-	supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,verbose_name="the supplier of the product",default=1)
 	section = models.ForeignKey(Section, on_delete=models.CASCADE,verbose_name="the section where the product is stored",default=1)
 
 class Price(models.Model):
-	object = models.ForeignKey(Object,on_delete=models.CASCADE,verbose_name='the object that corresponds to the price',default=1)
+	object = models.ForeignKey(Object,on_delete=models.CASCADE,verbose_name='object',default=1)
 	price = models.DecimalField(max_digits=20,decimal_places=2)
-	date = models.DateField(default=timezone.now)
+	date = models.DateTimeField(default=timezone.now)
 	currency = models.CharField(max_length=50)
+	supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,verbose_name="the supplier of the product",default=1)
+
+	class Meta:
+		constraints = [
+            models.UniqueConstraint(fields=['object', 'date'], name='unique_date_id')
+        ]
