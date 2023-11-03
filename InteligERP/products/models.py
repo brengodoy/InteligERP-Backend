@@ -1,6 +1,8 @@
 from django.db import models
 from stakeholders.models import Supplier
 from storage.models import Section
+from django.utils import timezone
+
 
 # Create your models here.
 class Object(models.Model):
@@ -12,4 +14,9 @@ class Object(models.Model):
 	weight = models.DecimalField(max_digits=20,decimal_places=3)
 	supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,verbose_name="the supplier of the product",default=1)
 	section = models.ForeignKey(Section, on_delete=models.CASCADE,verbose_name="the section where the product is stored",default=1)
-	#price ?
+
+class Price(models.Model):
+	object = models.ForeignKey(Object,on_delete=models.CASCADE,verbose_name='the object that corresponds to the price',default=1)
+	price = models.DecimalField(max_digits=20,decimal_places=2)
+	date = models.DateField(default=timezone.now)
+	currency = models.CharField(max_length=50)

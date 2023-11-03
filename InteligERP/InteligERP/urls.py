@@ -26,8 +26,8 @@ urlpatterns = [
     # path('', access.admin),
 
     path('signup/', access.create_user, name='signup'),
-    path('me', access.identify_user, name='me'),
-    path('signin', access.login_user, name='login_user'),
+    path('me/', access.identify_user, name='me'),
+    path('signin/', access.login_user, name='login_user'),
     path('update-password/', access.update_password, name='set-password'),
 
     path('create-client/', stakeholders.create_client, name='create-client'),
