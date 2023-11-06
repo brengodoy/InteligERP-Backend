@@ -71,4 +71,19 @@ urlpatterns = [
 	path('update-sale/', transactions.update_sale, name='update-sale'),
 	path('delete-sale/', transactions.delete_sale, name='delete-sale'),
 
+    path('create-sale-object/', transactions.create_sale_object, name='create-sale-object'),
+	path('get-sale-object/', transactions.get_sale_object, name='get-sale-object'),
+	path('get-all-sale-object/', transactions.get_all_sale_object, name='get-sale-all-object'),
+	path('update-sale-object/', transactions.update_sale_object, name='update-sale-object'),
+	path('delete-sale-object/', transactions.delete_sale_object, name='delete-sale-object'),
+	
+    path('create-purchase/', transactions.create_purchase, name='create-purchase'),
+	path('get-purchase/', transactions.get_purchase, name='get-purchase'),
+	path('get-all-purchase/', transactions.get_all_purchase, name='get-all-purchase'),
+	path('update-purchase/', transactions.update_purchase, name='update-purchase'),
+	path('delete-purchase/', transactions.delete_purchase, name='delete-purchase'),
+	
+	path('create-purchase-object/', transactions.create_purchase_object, name='create-purchase-object'),
+
+
 ]

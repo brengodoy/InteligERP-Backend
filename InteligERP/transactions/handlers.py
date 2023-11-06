@@ -1,8 +1,13 @@
 from django.http import JsonResponse
-from .forms import CreateSaleForm,CreatePurchaseForm
+from .forms import CreateSaleForm,CreatePurchaseForm,CreateSaleObjectForm,CreatePurchaseObjectForm
 import yaml,json
-from .models import Sale
-from stakeholders.models import Client
+from .models import Sale,Sale_object,Object,Purchase
+from stakeholders.models import Client,Supplier
+from django.db.utils import IntegrityError
+from django.shortcuts import get_object_or_404
+from products.models import Price
+from django.db.models import Max
+from decimal import Decimal
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -83,5 +88,197 @@ def delete_sale(request):
             return JsonResponse({'success': True, 'message': 'Sale deleted successfully'})
         except Sale.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Sale does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def create_sale_object(request):
+    if request.method == 'POST':
+        form = CreateSaleObjectForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
+        else:
+            errors = form.errors.as_json()
+            error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
+            if '__all__' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The object entered is already in this sale.'})
+            elif 'sale' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The sale entered does not exist.'})
+            elif 'object' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_sale_object(request):
+    if request.method == 'GET':
+        id = request.GET.get('id')
+        try:
+            sale_object = Sale_object.objects.get(id=id)
+            return JsonResponse({'id':sale_object.id,
+                                 'sale': sale_object.sale.id,
+                                 'object': sale_object.object.id,
+                                 'amount': sale_object.amount})
+        except Sale_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_all_sale_object(request):
+    if request.method == 'GET':
+        sales_objects = Sale_object.objects.all()
+        sales_objects_list = []
+        for sale_object in sales_objects:
+            sales_objects_list.append({'id':sale_object.id,
+                                 'sale': sale_object.sale.id,
+                                 'object': sale_object.object.id,
+                                 'amount': sale_object.amount})
+        return JsonResponse({'sales': sales_objects_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def update_sale_object(request):
+    if request.method == 'POST':
+        id = request.GET.get('id')
+        try:
+            sale_object = Sale_object.objects.get(id=id)
+            if 'sale' in request.POST:
+                try:
+                    id_sale = request.POST.get('sale')
+                    sale = Sale.objects.get(id=id_sale)
+                    sale_object.sale = sale
+                except Sale.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The sale entered does not exist.'})
+            if 'object' in request.POST:
+                try:
+                    id_object = request.POST.get('object')
+                    object = Object.objects.get(id=id_object)
+                    sale_object.object = object
+                except Object.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
+            if 'amount' in request.POST:
+                sale_object.amount = request.POST.get('amount')      
+            sale_object.save()
+            return JsonResponse({'success': True, 'message': 'Sale_object updated successfully'})
+        except Sale_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
+        except IntegrityError:
+            return JsonResponse({'success': False, 'message': 'The object entered is already in this sale.'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def delete_sale_object(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        try:
+            sale_object = Sale_object.objects.get(id=id)
+            sale_object.delete()
+            return JsonResponse({'success': True, 'message': 'Sale_object deleted successfully'})
+        except Sale_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def create_purchase(request):
+    if request.method == 'POST':
+        form = CreatePurchaseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Purchase created successfully'})
+        else:
+            errors = form.errors.as_json()
+            error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
+            if 'supplier' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_purchase(request):
+    if request.method == 'GET':
+        id = request.GET.get('id')
+        try:
+            purchase = Purchase.objects.get(id=id)
+            return JsonResponse({'id':purchase.id,
+                                 'date': purchase.date,
+                                 'total_cost': purchase.total_cost,
+                                 'supplier': purchase.supplier.id})
+        except Purchase.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_all_purchase(request):
+    if request.method == 'GET':
+        purchases = Purchase.objects.all()
+        purchase_list = []
+        for purchase in purchases:
+            purchase_list.append({'id':purchase.id,
+                                 'date': purchase.date,
+                                 'total_cost': purchase.total_cost,
+                                 'supplier': purchase.supplier.id})
+        return JsonResponse({'purchases': purchase_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def update_purchase(request):
+    if request.method == 'POST':
+        id = request.GET.get('id')
+        try:
+            purchase = Purchase.objects.get(id=id)
+            if 'supplier' in request.POST:
+                try:
+                    id_supplier = request.POST.get('supplier')
+                    supplier = Supplier.objects.get(id=id_supplier)
+                    purchase.supplier = supplier
+                except Supplier.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
+            if 'total_cost' in request.POST:
+                purchase.total_cost = request.POST.get('total_cost')
+            if 'date' in request.POST:
+                purchase.date = request.POST.get('date')      
+            purchase.save()
+            return JsonResponse({'success': True, 'message': 'Purchase updated successfully'})
+        except Purchase.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def delete_purchase(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        try:
+            purchase = Purchase.objects.get(id=id)
+            purchase.delete()
+            return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
+        except Purchase.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def create_purchase_object(request):
+    if request.method == 'POST':
+        mutable_post = request.POST.copy()  # Crea una copia mutable del objeto request.POST
+        purchase = Purchase.objects.get(id=mutable_post['purchase'])
+        object = Object.objects.get(id=mutable_post['object'])
+        price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
+        amount = Decimal(mutable_post['amount'])
+        price_value = Decimal(price.price)
+        mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia
+        form = CreatePurchaseObjectForm(mutable_post)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
+        else:
+            errors = form.errors.as_json()
+            error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
+            if 'purchase' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The purchase entered does not exist.'})
+            elif 'object' in error_dict:
+                return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
