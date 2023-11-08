@@ -1,12 +1,12 @@
 from django.http import JsonResponse
 from .forms import CreateSaleForm,CreatePurchaseForm,CreateSaleObjectForm,CreatePurchaseObjectForm
 import yaml,json
-from .models import Sale,Sale_object,Object,Purchase
+from .models import Sale,Sale_object,Object,Purchase,Purchase_object
 from stakeholders.models import Client,Supplier
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 from products.models import Price
-from django.db.models import Max
+from django.db.models import Max,Sum
 from decimal import Decimal
 
 # Read YAML configuration file
@@ -182,7 +182,9 @@ def delete_sale_object(request):
     
 def create_purchase(request):
     if request.method == 'POST':
-        form = CreatePurchaseForm(request.POST)
+        mutable_post = request.POST.copy()  # Crea una copia mutable del objeto request.POST
+        mutable_post['total_cost'] = 0
+        form = CreatePurchaseForm(mutable_post)
         if form.is_valid():
             form.save()
             return JsonResponse({'success': True, 'message': 'Purchase created successfully'})
@@ -235,8 +237,8 @@ def update_purchase(request):
                     purchase.supplier = supplier
                 except Supplier.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
-            if 'total_cost' in request.POST:
-                purchase.total_cost = request.POST.get('total_cost')
+            """if 'total_cost' in request.POST:
+                purchase.total_cost = request.POST.get('total_cost')"""	#el total_cost se modifica automatico en base a los purchase_object
             if 'date' in request.POST:
                 purchase.date = request.POST.get('date')      
             purchase.save()
@@ -251,6 +253,8 @@ def delete_purchase(request):
         id = request.POST.get('id')
         try:
             purchase = Purchase.objects.get(id=id)
+            purchase_objects = Purchase_object.objects.filter(purchase=purchase)
+            purchase_objects.delete()
             purchase.delete()
             return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
         except Purchase.DoesNotExist:
@@ -261,15 +265,23 @@ def delete_purchase(request):
 def create_purchase_object(request):
     if request.method == 'POST':
         mutable_post = request.POST.copy()  # Crea una copia mutable del objeto request.POST
-        purchase = Purchase.objects.get(id=mutable_post['purchase'])
+        """purchase = Purchase.objects.get(id=mutable_post['purchase'])
         object = Object.objects.get(id=mutable_post['object'])
         price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
         amount = Decimal(mutable_post['amount'])
         price_value = Decimal(price.price)
-        mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia
+        mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia"""
         form = CreatePurchaseObjectForm(mutable_post)
         if form.is_valid():
+            """purchase = Purchase.objects.get(id=mutable_post['purchase'])
+            object = Object.objects.get(id=mutable_post['object'])
+            price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
+            amount = Decimal(mutable_post['amount'])
+            price_value = Decimal(price.price)
+            mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia"""
             form.save()
+            """purchase.total_cost = purchase.total_cost + mutable_post['price']
+            purchase.save()"""
             return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
         else:
             errors = form.errors.as_json()
@@ -280,5 +292,89 @@ def create_purchase_object(request):
                 return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def get_purchase_object(request):
+    if request.method == 'GET':
+        id = request.GET.get('id')
+        try:
+            purchase_object = Purchase_object.objects.get(id=id)
+            return JsonResponse({'id': purchase_object.id,
+                                 'purchase': purchase_object.purchase.id,
+                                 'object': purchase_object.object.id,
+                                 'amount': purchase_object.amount,
+                                 'price': purchase_object.price})
+        except Purchase_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_all_purchase_object(request):
+    if request.method == 'GET':
+        if 'id_purchase' in request.GET:
+            try:
+                purchase = Purchase.objects.get(id=request.GET.get('id_purchase'))
+                purchase_objects = Purchase_object.objects.filter(purchase=purchase)
+            except Purchase.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Purchase entered does not exist'})
+        else:
+            purchase_objects = Purchase_object.objects.all()
+        
+        purchase_object_list = []
+        for purchase_object in purchase_objects:
+            purchase_object_list.append({
+                'id': purchase_object.id,
+                'purchase': purchase_object.purchase.id,
+                'object': purchase_object.object.id,
+                'amount': purchase_object.amount,
+                'price': purchase_object.price
+            })
+        return JsonResponse({'purchase_objects': purchase_object_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def update_purchase_object(request):
+    if request.method == 'POST':
+        id_purchase_object = request.GET.get('id_purchase_object')
+        try:
+            purchase_object = Purchase_object.objects.get(id=id_purchase_object)
+            if 'amount' in request.POST:
+                purchase_object.amount = request.POST.get('amount')
+                purchase_object.save()
+                calculate_price(id_purchase_object,request.POST.get('amount'))
+            return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
+        except Purchase_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def calculate_total_cost(id_purchase):
+    purchase = Purchase.objects.get(id=id_purchase)
+    purchase_objects = Purchase_object.objects.filter(purchase=purchase.id)
+    total_price_sum = purchase_objects.aggregate(total_price_sum=Sum('price'))
+    total_cost = total_price_sum.get('total_price_sum', 0) or Decimal('0.0')
+    purchase.total_cost = total_cost
+    purchase.save()
+
+def calculate_price(id_purchase_object,amount):
+    purchase_object = Purchase_object.objects.get(id=id_purchase_object)
+    purchase = Purchase.objects.get(id=purchase_object.purchase.id)
+    object = Object.objects.get(id=purchase_object.object.id)
+    price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
+    purchase_object.price = Decimal(amount) * Decimal(price.price)
+    purchase_object.save()
+    calculate_total_cost(purchase.id)
+    
+def delete_purchase_object(request):
+    if request.method == 'POST':
+        id_purchase_object = request.POST.get('id_purchase_object')
+        try:
+            purchase_object = Purchase_object.objects.get(id=id_purchase_object)
+            purchase_object.delete()
+            calculate_total_cost(purchase_object.purchase.id)
+            return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
+        except Purchase_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})

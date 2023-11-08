@@ -84,6 +84,9 @@ urlpatterns = [
 	path('delete-purchase/', transactions.delete_purchase, name='delete-purchase'),
 	
 	path('create-purchase-object/', transactions.create_purchase_object, name='create-purchase-object'),
-
+	path('get-purchase-object/', transactions.get_purchase_object, name='get-purchase-object'),
+	path('get-all-purchase-object/', transactions.get_all_purchase_object, name='get-all-purchase-object'),
+	path('update-purchase-object/', transactions.update_purchase_object, name='update-purchase-object'),
+	path('delete-purchase-object/', transactions.delete_purchase_object, name='delete-purchase-object'),
 
 ]

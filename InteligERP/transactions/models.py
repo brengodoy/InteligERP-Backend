@@ -7,7 +7,7 @@ from django.db.models import Max
 # Create your models here.
 class Purchase(models.Model):
 	date = models.DateTimeField(default=timezone.now,null=True)
-	total_cost = models.DecimalField(max_digits=20,decimal_places=3,null=True,default=0)
+	total_cost = models.DecimalField(max_digits=20,decimal_places=3,default=0)
 	supplier = models.ForeignKey(Supplier,on_delete=models.CASCADE,verbose_name="supplier related to the purchase",default=1)
 
 class Sale(models.Model):
