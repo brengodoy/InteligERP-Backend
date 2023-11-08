@@ -26,3 +26,8 @@ class User(AbstractUser):
     def get_info(self):
         return {'name': self.first_name, 'email': self.email,
                          'is_superuser': self.is_superuser, 'is_staff': self.is_staff}
+
+class Company(models.Model):
+    business_name = models.CharField(max_length=300)
+    description = models.CharField(max_length=300,null=True)
+    #subscription_plan = models.CharField(max_length=30,default='Basic')
