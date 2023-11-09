@@ -1,5 +1,5 @@
 from django import forms
-from access.models import User
+from access.models import User,Company
 from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate
@@ -59,3 +59,10 @@ class RegisterForm(UserCreationForm):
 class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
     email = forms.CharField(widget=forms.EmailInput)
+
+class CreateCompanyForm(forms.ModelForm):
+    description = forms.CharField(max_length=300,required=False)  # Hacer el campo de description opcional
+    
+    class Meta:
+        model = Company
+        fields = ['business_name','description']

@@ -39,7 +39,8 @@ def get_object(request):
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
-                                 'section': object.section.id})
+                                 'section': object.section.id,
+                                 'discontinued': object.discontinued})
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
     else:
@@ -57,7 +58,8 @@ def get_all_objects(request):
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
-                                 'section': object.section.id})
+                                 'section': object.section.id,
+                                 'discontinued': object.discontinued})
         return JsonResponse({'objects': object_list})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -86,6 +88,8 @@ def update_object(request):
                 object.height = request.POST.get('height')
             if 'weight' in request.POST:
                 object.weight = request.POST.get('weight')        
+            if 'discontinued' in request.POST:
+                object.discontinued = request.POST.get('discontinued')
             object.save()
             return JsonResponse({'success': True, 'message': 'Object updated successfully'})
         except Object.DoesNotExist:
@@ -93,9 +97,9 @@ def update_object(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
-def delete_object(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+"""def delete_object(request):
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             object = Object.objects.get(id=id)
             object.delete()
@@ -103,7 +107,7 @@ def delete_object(request):
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
     else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})"""
     
 def create_price(request):
     if request.method == 'POST':

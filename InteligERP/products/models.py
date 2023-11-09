@@ -13,6 +13,7 @@ class Object(models.Model):
 	width = models.DecimalField(max_digits=20,decimal_places=3)
 	weight = models.DecimalField(max_digits=20,decimal_places=3)
 	section = models.ForeignKey(Section, on_delete=models.CASCADE,verbose_name="the section where the product is stored",default=1)
+	discontinued = models.BooleanField(default=False)
 
 class Price(models.Model):
 	object = models.ForeignKey(Object,on_delete=models.CASCADE,verbose_name='object',default=1)

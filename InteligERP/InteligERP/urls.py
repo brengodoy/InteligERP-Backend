@@ -88,5 +88,11 @@ urlpatterns = [
 	path('get-all-purchase-object/', transactions.get_all_purchase_object, name='get-all-purchase-object'),
 	path('update-purchase-object/', transactions.update_purchase_object, name='update-purchase-object'),
 	path('delete-purchase-object/', transactions.delete_purchase_object, name='delete-purchase-object'),
+	
+    path('create-company/', access.create_company, name='create-company'),
+	path('get-company/', access.get_company, name='get-company'),
+	path('get-all-company/', access.get_all_company, name='get-all-company'),
+	path('update-company/', access.update_company, name='update-company'),
+	path('delete-company/', access.delete_company, name='delete-company'),	
 
 ]

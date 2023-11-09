@@ -1,6 +1,6 @@
 from django.http import JsonResponse
-from .models import User
-from access.forms import RegisterForm, LoginForm
+from .models import User,Company
+from access.forms import RegisterForm, LoginForm, CreateCompanyForm
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
 from .decorators import token_required
@@ -110,3 +110,68 @@ def adm_blank_password(request):
     user.set_password('')
     user.save()
     return JsonResponse({'success': True, 'message': 'Password updated successfully'})
+
+def create_company(request):
+    if request.method == 'POST':
+        form = CreateCompanyForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Company created successfully'})
+        else:
+            errors = form.errors.as_json()
+            return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_company(request):
+    if request.method == 'GET':
+        id = request.GET.get('id')
+        try:
+            company = Company.objects.get(id=id)
+            return JsonResponse({'id':company.id,
+                                 'business_name': company.business_name,
+                                 'description': company.description})
+        except Company.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Company does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_all_company(request):
+    if request.method == 'GET':
+        companies = Company.objects.all()
+        companies_list = []
+        for company in companies:
+            companies_list.append({'id':company.id,
+                                 'business_name': company.business_name,
+                                 'description': company.description})
+        return JsonResponse({'companies': companies_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def update_company(request):
+    if request.method == 'POST':
+        id = request.GET.get('id')
+        try:
+            company = Company.objects.get(id=id)
+            if 'business_name' in request.POST:
+                company.business_name = request.POST.get('business_name')
+            if 'description' in request.POST:
+                company.description = request.POST.get('description')      
+            company.save()
+            return JsonResponse({'success': True, 'message': 'Company updated successfully'})
+        except Company.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Company does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def delete_company(request):
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
+        try:
+            company = Company.objects.get(id=id)
+            company.delete()
+            return JsonResponse({'success': True, 'message': 'Company deleted successfully'})
+        except Company.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Company does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
