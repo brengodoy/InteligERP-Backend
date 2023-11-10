@@ -4,6 +4,7 @@ from .forms import CreateObjectForm,CreatePriceForm
 import yaml,json
 from stakeholders.models import Supplier
 from django.db.models import Max
+from storage.handlers import calculate_available_volume
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -13,8 +14,16 @@ def create_object(request):
     if request.method == 'POST':
         form = CreateObjectForm(request.POST)
         if form.is_valid():
-            form.save()
-            return JsonResponse({'success': True, 'message': 'Object created successfully'})
+            object_instance = form.save(commit=False)
+            section = object_instance.section
+            volume = object_instance.height * object_instance.width * object_instance.length
+            calculate_available_volume(section.id)
+            if section.available_storage < volume:
+                return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
+            else:
+                object_instance.save()
+                calculate_available_volume(section.id)
+                return JsonResponse({'success': True, 'message': 'Object created successfully'})
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -90,6 +99,13 @@ def update_object(request):
                 object.weight = request.POST.get('weight')        
             if 'discontinued' in request.POST:
                 object.discontinued = request.POST.get('discontinued')
+            if any(key in request.POST for key in ['length', 'height', 'width']):
+                volume = object.length * object.width * object.height
+                object.save(commit=False)
+                calculate_available_volume(object.section.id)
+                if object.section.available_storage < volume:
+                    return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
+
             object.save()
             return JsonResponse({'success': True, 'message': 'Object updated successfully'})
         except Object.DoesNotExist:
@@ -171,3 +187,4 @@ def delete_price(request):
             return JsonResponse({'success': False, 'message': 'Price does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    

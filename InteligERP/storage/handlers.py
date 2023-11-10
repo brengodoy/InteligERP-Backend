@@ -1,9 +1,11 @@
 from django.http import JsonResponse
 from storage.models import Warehouse,Section
 from storage.forms import CreateWarehouseForm,CreateSectionForm
+from products.models import Object
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
 import yaml,json
+from decimal import Decimal
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -84,7 +86,11 @@ def create_section(request):
     if request.method == 'POST':
         form = CreateSectionForm(request.POST)
         if form.is_valid():
-            form.save()
+            #form.save()
+            section = form.save(commit=False)  # Guardar el formulario sin commit para permitir modificaciones
+            # Calcular el available_storage
+            section.available_storage = section.height * section.length * section.width
+            section.save()  # Guardar la instancia modificada
             return JsonResponse({'success': True, 'message': 'Section created successfully'})
         else:
             errors = form.errors.as_json()
@@ -154,7 +160,11 @@ def update_section(request):
             if 'max_weight' in request.POST:
                 section.max_weight = request.POST.get('max_weight')
             if 'description' in request.POST:
-                section.description = request.POST.get('description')        
+                section.description = request.POST.get('description')  
+            section.save()
+            #if 'length' in request.POST or 'height' in request.POST or 'width' in request.POST:
+            if any(key in request.POST for key in ['length', 'height', 'width']):
+                section.available_storage = Decimal(section.height) * Decimal(section.length) * Decimal(section.width)      
             section.save()
             return JsonResponse({'success': True, 'message': 'Section updated successfully'})
         except Section.DoesNotExist:
@@ -173,3 +183,12 @@ def delete_section(request):
             return JsonResponse({'success': False, 'message': 'Section does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def calculate_available_volume(section_id):
+    objects = Object.objects.filter(section=section_id)
+    section = Section.objects.get(id=section_id)
+    total_volume = 0
+    for object in objects:
+        total_volume = total_volume + (object.height * object.length * object.width)
+    section.available_storage = (section.height * section.width * section.length) - total_volume
+    section.save()

@@ -15,3 +15,8 @@ class Section(models.Model):
 	width = models.DecimalField(max_digits=20,decimal_places=3)
 	max_weight = models.DecimalField(max_digits=20,decimal_places=3,null=True)
 	description = models.CharField(max_length=300,null=True)
+	available_storage = models.DecimalField(max_digits=20,decimal_places=3,default=0)
+	
+	"""def save(self, *args, **kwargs):
+		self.available_storage = self.height * self.length * self.width
+		super(Section, self).save(*args, **kwargs)"""
