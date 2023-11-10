@@ -5,6 +5,8 @@ import yaml,json
 from stakeholders.models import Supplier
 from django.db.models import Max
 from storage.handlers import calculate_available_volume
+from decimal import Decimal
+from storage.models import Section
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -17,12 +19,12 @@ def create_object(request):
             object_instance = form.save(commit=False)
             section = object_instance.section
             volume = object_instance.height * object_instance.width * object_instance.length
-            calculate_available_volume(section.id)
-            if section.available_storage < volume:
+            calculate_available_volume(section.id,True)
+            if calculate_available_volume(section.id,True) < volume:
                 return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
             else:
                 object_instance.save()
-                calculate_available_volume(section.id)
+                calculate_available_volume(section.id,False)
                 return JsonResponse({'success': True, 'message': 'Object created successfully'})
         else:
             errors = form.errors.as_json()
@@ -83,6 +85,7 @@ def update_object(request):
                     id_section = request.POST.get('section')
                     section = Supplier.objects.get(id=id_section)
                     object.section = section
+                    #object.save()
                 except Supplier.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
             if 'product_id' in request.POST:
@@ -100,12 +103,18 @@ def update_object(request):
             if 'discontinued' in request.POST:
                 object.discontinued = request.POST.get('discontinued')
             if any(key in request.POST for key in ['length', 'height', 'width']):
-                volume = object.length * object.width * object.height
-                object.save(commit=False)
-                calculate_available_volume(object.section.id)
-                if object.section.available_storage < volume:
-                    return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
-
+                volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height)
+                objects = Object.objects.filter(section=object.section.id).exclude(id=object.id)
+                section = Section.objects.get(id=object.section.id)
+                total_volume = 0
+                for obj in objects:
+                    total_volume = total_volume + (obj.height * obj.length * obj.width)
+                available_storage = (section.height * section.width * section.length) - total_volume
+                if available_storage < volume:
+                    return JsonResponse({'success': True, 'message': 'There is not enough space in the section for this object'})
+                else:
+                    object.save()
+                    calculate_available_volume(object.section.id,False)
             object.save()
             return JsonResponse({'success': True, 'message': 'Object updated successfully'})
         except Object.DoesNotExist:

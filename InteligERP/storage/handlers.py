@@ -184,11 +184,15 @@ def delete_section(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-def calculate_available_volume(section_id):
+def calculate_available_volume(section_id,send_back):
     objects = Object.objects.filter(section=section_id)
     section = Section.objects.get(id=section_id)
     total_volume = 0
     for object in objects:
         total_volume = total_volume + (object.height * object.length * object.width)
     section.available_storage = (section.height * section.width * section.length) - total_volume
-    section.save()
+    #section.save()
+    if send_back:
+        return section.available_storage
+    else:
+        section.save()
