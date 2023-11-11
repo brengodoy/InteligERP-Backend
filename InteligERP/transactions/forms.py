@@ -24,7 +24,7 @@ class CreatePurchaseForm(forms.ModelForm):
         
 class CreatePurchaseObjectForm(forms.ModelForm):
     amount = forms.DecimalField(max_digits=20,decimal_places=2,required=False)  # Hacer el campo de amount opcional
-    price = forms.DecimalField(max_digits=20,decimal_places=2,required=False)  # Hacer el campo de price opcional)
+    price = forms.DecimalField(max_digits=20,decimal_places=2,required=False)  # Hacer el campo de price opcional
     class Meta:
         model = Purchase_object
         fields = ['purchase','object','amount','price']

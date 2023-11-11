@@ -95,8 +95,12 @@ def create_sale_object(request):
     if request.method == 'POST':
         form = CreateSaleObjectForm(request.POST)
         if form.is_valid():
-            form.save()
-            return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
+            sale_object = form.save(commit=False)
+            if sale_object.object.discontinued == False:
+                form.save()
+                return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
+            else:
+                return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -154,7 +158,10 @@ def update_sale_object(request):
                 try:
                     id_object = request.POST.get('object')
                     object = Object.objects.get(id=id_object)
-                    sale_object.object = object
+                    if object.discontinued == False:
+                        sale_object.object = object
+                    else:
+                        return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
                 except Object.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
             if 'amount' in request.POST:
@@ -264,24 +271,18 @@ def delete_purchase(request):
     
 def create_purchase_object(request):
     if request.method == 'POST':
-        mutable_post = request.POST.copy()  # Crea una copia mutable del objeto request.POST
-        """purchase = Purchase.objects.get(id=mutable_post['purchase'])
-        object = Object.objects.get(id=mutable_post['object'])
-        price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
-        amount = Decimal(mutable_post['amount'])
-        price_value = Decimal(price.price)
-        mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia"""
-        form = CreatePurchaseObjectForm(mutable_post)
+        form = CreatePurchaseObjectForm(request.POST)
         if form.is_valid():
-            """purchase = Purchase.objects.get(id=mutable_post['purchase'])
-            object = Object.objects.get(id=mutable_post['object'])
-            price = Price.objects.filter(object=object, supplier=purchase.supplier, date__lt=purchase.date).order_by('-date').first()
-            amount = Decimal(mutable_post['amount'])
-            price_value = Decimal(price.price)
-            mutable_post['price'] = amount * price_value   # Añade o modifica un campo en la copia"""
-            form.save()
-            """purchase.total_cost = purchase.total_cost + mutable_post['price']
-            purchase.save()"""
+            purchase_object = form.save(commit=False)
+            if purchase_object.object.discontinued == False:
+                purchase = Purchase.objects.get(id=request.POST.get('purchase'))
+                object = Object.objects.get(id=request.POST.get('object'))
+                price = Price.objects.filter(object=object.id, supplier=purchase.supplier.id, date__lt=purchase.date).order_by('-date').first()
+                purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
+                purchase_object.save()
+                calculate_total_cost(purchase.id)
+            else:
+                return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
             return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
         else:
             errors = form.errors.as_json()
