@@ -173,10 +173,11 @@ def update_section(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
 def delete_section(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             section = Section.objects.get(id=id)
+            #objects = Object.objects.filter() falta decidir que hacemos al borrar una seccion que contiene objetos.
             section.delete()
             return JsonResponse({'success': True, 'message': 'Section deleted successfully'})
         except Section.DoesNotExist:

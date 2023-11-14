@@ -80,10 +80,12 @@ def update_sale(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
 def delete_sale(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             sale = Sale.objects.get(id=id)
+            sale_objects = Sale_object.objects.filter(sale=id)
+            sale_objects.delete()
             sale.delete()
             return JsonResponse({'success': True, 'message': 'Sale deleted successfully'})
         except Sale.DoesNotExist:
@@ -96,8 +98,11 @@ def create_sale_object(request):
         form = CreateSaleObjectForm(request.POST)
         if form.is_valid():
             sale_object = form.save(commit=False)
+            #sale_object.object.stock = sale_object.object.stock - sale_object.amount
+            #sale_object.object.save()
             if sale_object.object.discontinued == False:
                 form.save()
+                calculate_stock(sale_object.object.id)
                 return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
             else:
                 return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
@@ -154,18 +159,41 @@ def update_sale_object(request):
                     sale_object.sale = sale
                 except Sale.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The sale entered does not exist.'})
-            if 'object' in request.POST:
-                try:
-                    id_object = request.POST.get('object')
-                    object = Object.objects.get(id=id_object)
-                    if object.discontinued == False:
-                        sale_object.object = object
-                    else:
-                        return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
-                except Object.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
-            if 'amount' in request.POST:
-                sale_object.amount = request.POST.get('amount')      
+            if 'amount' in request.POST and 'object' in request.POST:
+                id_object = request.POST.get('object')
+                old_object_id = sale_object.object.id
+                object = Object.objects.get(id=id_object)
+                if object.discontinued == False:
+                    sale_object.object = object
+                    sale_object.amount = request.POST.get('amount')
+                    sale_object.save()
+                    calculate_stock(id_object)
+                    calculate_stock(old_object_id)
+                else:
+                    return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
+            else:
+                if 'amount' in request.POST:
+                    sale_object.amount = request.POST.get('amount')
+                    sale_object.object.stock = Decimal(sale_object.object.stock) - Decimal(sale_object.amount)
+                    sale_object.object.save() 
+                    sale_object.save()
+                    calculate_stock(sale_object.object.id)
+                if 'object' in request.POST:
+                    try:
+                        id_object = request.POST.get('object')
+                        object = Object.objects.get(id=id_object)
+                        old_object_id = sale_object.object.id
+                        if object.discontinued == False:
+                            sale_object.object = object
+                            #object.stock = Decimal(object.stock) - Decimal(sale_object.amount)
+                            #object.save()
+                            sale_object.save()
+                            calculate_stock(id_object)
+                            calculate_stock(old_object_id)
+                        else:
+                            return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
+                    except Object.DoesNotExist:
+                        return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})      
             sale_object.save()
             return JsonResponse({'success': True, 'message': 'Sale_object updated successfully'})
         except Sale_object.DoesNotExist:
@@ -176,11 +204,12 @@ def update_sale_object(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
 def delete_sale_object(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             sale_object = Sale_object.objects.get(id=id)
             sale_object.delete()
+            calculate_stock(sale_object.object.id)
             return JsonResponse({'success': True, 'message': 'Sale_object deleted successfully'})
         except Sale_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
@@ -256,8 +285,8 @@ def update_purchase(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
 def delete_purchase(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             purchase = Purchase.objects.get(id=id)
             purchase_objects = Purchase_object.objects.filter(purchase=purchase)
@@ -277,10 +306,13 @@ def create_purchase_object(request):
             if purchase_object.object.discontinued == False:
                 purchase = Purchase.objects.get(id=request.POST.get('purchase'))
                 object = Object.objects.get(id=request.POST.get('object'))
+                #object.stock = object.stock + Decimal(request.POST.get('amount'))
+                #object.save()
                 price = Price.objects.filter(object=object.id, supplier=purchase.supplier.id, date__lt=purchase.date).order_by('-date').first()
                 purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
                 purchase_object.save()
                 calculate_total_cost(purchase.id)
+                calculate_stock(object.id)
             else:
                 return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
             return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
@@ -343,6 +375,7 @@ def update_purchase_object(request):
             if 'amount' in request.POST:
                 purchase_object.amount = request.POST.get('amount')
                 purchase_object.save()
+                calculate_stock(purchase_object.object.id)
                 calculate_price(id_purchase_object,request.POST.get('amount'))
             return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
         except Purchase_object.DoesNotExist:
@@ -350,6 +383,20 @@ def update_purchase_object(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+def delete_purchase_object(request):
+    if request.method == 'DELETE':
+        id_purchase_object = request.GET.get('id_purchase_object')
+        try:
+            purchase_object = Purchase_object.objects.get(id=id_purchase_object)
+            purchase_object.delete()
+            calculate_total_cost(purchase_object.purchase.id)
+            calculate_stock(purchase_object.object.id)
+            return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
+        except Purchase_object.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
 def calculate_total_cost(id_purchase):
     purchase = Purchase.objects.get(id=id_purchase)
     purchase_objects = Purchase_object.objects.filter(purchase=purchase.id)
@@ -367,15 +414,15 @@ def calculate_price(id_purchase_object,amount):
     purchase_object.save()
     calculate_total_cost(purchase.id)
     
-def delete_purchase_object(request):
-    if request.method == 'POST':
-        id_purchase_object = request.POST.get('id_purchase_object')
-        try:
-            purchase_object = Purchase_object.objects.get(id=id_purchase_object)
-            purchase_object.delete()
-            calculate_total_cost(purchase_object.purchase.id)
-            return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
-        except Purchase_object.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
-    else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+def calculate_stock(id_object):
+    object = Object.objects.get(id=id_object)
+    purchase_objects = Purchase_object.objects.filter(object=object)
+    sale_objects = Sale_object.objects.filter(object=object)
+    acquired = 0
+    sold = 0
+    for purchase_object in purchase_objects:
+        acquired = acquired + purchase_object.amount
+    for sale_object in sale_objects:
+        sold = sold + sale_object.amount
+    object.stock = acquired - sold
+    object.save()
