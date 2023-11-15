@@ -72,10 +72,10 @@ def get_all_clients(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
 def delete_client(request):
-    if request.method == 'POST':
-        cuil = request.POST.get('CUIL')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
-            client = Client.objects.get(CUIL=cuil)
+            client = Client.objects.get(id=id)
             client.delete()
             return JsonResponse({'success': True, 'message': 'Client deleted successfully'})
         except Client.DoesNotExist:
@@ -98,7 +98,6 @@ def create_supplier(request):
                 return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-
 
 def update_supplier(request):
     if request.method == 'POST':
@@ -138,10 +137,10 @@ def get_all_suppliers(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def delete_supplier(request):
-    if request.method == 'POST':
-        cuit = request.POST.get('CUIT')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
-            supplier = Supplier.objects.get(CUIT=cuit)
+            supplier = Supplier.objects.get(id=id)
             supplier.delete()
             return JsonResponse({'success': True, 'message': 'Supplier deleted successfully'})
         except Supplier.DoesNotExist:

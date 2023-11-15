@@ -71,11 +71,11 @@ def get_all_warehouses(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def delete_warehouse(request):
-    if request.method == 'POST':
-        id_warehouse = request.POST.get('id_warehouse')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
-            warehouse = Warehouse.objects.get(id_warehouse=id_warehouse)
-            warehouse.delete()
+            warehouse = Warehouse.objects.get(id=id)
+            warehouse.delete()  #OJO! aca tmb se borran todas las secciones q contenga (decidir que hacemos con los objetos q se encuentran dentro d las secciones)
             return JsonResponse({'success': True, 'message': 'Warehouse deleted successfully'})
         except Warehouse.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Warehouse does not exist'})
@@ -162,7 +162,6 @@ def update_section(request):
             if 'description' in request.POST:
                 section.description = request.POST.get('description')  
             section.save()
-            #if 'length' in request.POST or 'height' in request.POST or 'width' in request.POST:
             if any(key in request.POST for key in ['length', 'height', 'width']):
                 section.available_storage = Decimal(section.height) * Decimal(section.length) * Decimal(section.width)      
             section.save()
@@ -192,7 +191,6 @@ def calculate_available_volume(section_id,send_back):
     for object in objects:
         total_volume = total_volume + (object.height * object.length * object.width)
     section.available_storage = (section.height * section.width * section.length) - total_volume
-    #section.save()
     if send_back:
         return section.available_storage
     else:

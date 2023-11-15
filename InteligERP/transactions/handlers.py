@@ -98,8 +98,6 @@ def create_sale_object(request):
         form = CreateSaleObjectForm(request.POST)
         if form.is_valid():
             sale_object = form.save(commit=False)
-            #sale_object.object.stock = sale_object.object.stock - sale_object.amount
-            #sale_object.object.save()
             if sale_object.object.discontinued == False:
                 form.save()
                 calculate_stock(sale_object.object.id)
@@ -185,8 +183,6 @@ def update_sale_object(request):
                         old_object_id = sale_object.object.id
                         if object.discontinued == False:
                             sale_object.object = object
-                            #object.stock = Decimal(object.stock) - Decimal(sale_object.amount)
-                            #object.save()
                             sale_object.save()
                             calculate_stock(id_object)
                             calculate_stock(old_object_id)
@@ -273,8 +269,6 @@ def update_purchase(request):
                     purchase.supplier = supplier
                 except Supplier.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The supplier entered does not exist.'})
-            """if 'total_cost' in request.POST:
-                purchase.total_cost = request.POST.get('total_cost')"""	#el total_cost se modifica automatico en base a los purchase_object
             if 'date' in request.POST:
                 purchase.date = request.POST.get('date')      
             purchase.save()
