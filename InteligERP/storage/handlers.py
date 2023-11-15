@@ -161,9 +161,11 @@ def update_section(request):
                 section.max_weight = request.POST.get('max_weight')
             if 'description' in request.POST:
                 section.description = request.POST.get('description')  
-            section.save()
             if any(key in request.POST for key in ['length', 'height', 'width']):
-                section.available_storage = Decimal(section.height) * Decimal(section.length) * Decimal(section.width)      
+                try:
+                    calculate_available_volume(section, False)
+                except Exception as e:
+                    return JsonResponse({'success': False, 'message': str(e)})   
             section.save()
             return JsonResponse({'success': True, 'message': 'Section updated successfully'})
         except Section.DoesNotExist:
@@ -186,11 +188,20 @@ def delete_section(request):
 
 def calculate_available_volume(section_id,send_back):
     objects = Object.objects.filter(section=section_id)
-    section = Section.objects.get(id=section_id)
+    if isinstance(section_id,Section):
+        section = section_id
+    else:
+        section = Section.objects.get(id=section_id)
     total_volume = 0
     for object in objects:
-        total_volume = total_volume + (object.height * object.length * object.width)
-    section.available_storage = (section.height * section.width * section.length) - total_volume
+        if object.stock > 0:
+            total_volume = total_volume + (Decimal(object.height) * Decimal(object.length) * Decimal(object.width) * Decimal(object.stock))
+    available = (Decimal(section.height) * Decimal(section.width) * Decimal(section.length)) - Decimal(total_volume)
+    if available < 0:
+        raise Exception('No hay espacio disponible')
+    else:
+        section.available_storage = available
+
     if send_back:
         return section.available_storage
     else:

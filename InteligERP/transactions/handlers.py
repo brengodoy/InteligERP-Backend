@@ -4,10 +4,10 @@ import yaml,json
 from .models import Sale,Sale_object,Object,Purchase,Purchase_object
 from stakeholders.models import Client,Supplier
 from django.db.utils import IntegrityError
-from django.shortcuts import get_object_or_404
 from products.models import Price
-from django.db.models import Max,Sum
+from django.db.models import Sum
 from decimal import Decimal
+from storage.handlers import calculate_available_volume
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -101,6 +101,7 @@ def create_sale_object(request):
             if sale_object.object.discontinued == False:
                 form.save()
                 calculate_stock(sale_object.object.id)
+                calculate_available_volume(sale_object.object.section.id,False)
                 return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
             else:
                 return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
@@ -191,6 +192,7 @@ def update_sale_object(request):
                     except Object.DoesNotExist:
                         return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})      
             sale_object.save()
+            calculate_available_volume(sale_object.object.section.id,False)
             return JsonResponse({'success': True, 'message': 'Sale_object updated successfully'})
         except Sale_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
@@ -206,6 +208,7 @@ def delete_sale_object(request):
             sale_object = Sale_object.objects.get(id=id)
             sale_object.delete()
             calculate_stock(sale_object.object.id)
+            calculate_available_volume(sale_object.object.section.id,False)
             return JsonResponse({'success': True, 'message': 'Sale_object deleted successfully'})
         except Sale_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Sale_object does not exist'})
@@ -300,13 +303,12 @@ def create_purchase_object(request):
             if purchase_object.object.discontinued == False:
                 purchase = Purchase.objects.get(id=request.POST.get('purchase'))
                 object = Object.objects.get(id=request.POST.get('object'))
-                #object.stock = object.stock + Decimal(request.POST.get('amount'))
-                #object.save()
                 price = Price.objects.filter(object=object.id, supplier=purchase.supplier.id, date__lt=purchase.date).order_by('-date').first()
                 purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
                 purchase_object.save()
                 calculate_total_cost(purchase.id)
                 calculate_stock(object.id)
+                calculate_available_volume(object.section.id,False)
             else:
                 return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
             return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
@@ -371,6 +373,7 @@ def update_purchase_object(request):
                 purchase_object.save()
                 calculate_stock(purchase_object.object.id)
                 calculate_price(id_purchase_object,request.POST.get('amount'))
+                calculate_available_volume(purchase_object.object.section.id,False)
             return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
         except Purchase_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
@@ -385,6 +388,7 @@ def delete_purchase_object(request):
             purchase_object.delete()
             calculate_total_cost(purchase_object.purchase.id)
             calculate_stock(purchase_object.object.id)
+            calculate_available_volume(purchase_object.object.section.id,False)
             return JsonResponse({'success': True, 'message': 'Purchase deleted successfully'})
         except Purchase_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})

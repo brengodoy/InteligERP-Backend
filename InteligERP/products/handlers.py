@@ -83,9 +83,9 @@ def update_object(request):
             if 'section' in request.POST:
                 try:
                     id_section = request.POST.get('section')
-                    section = Supplier.objects.get(id=id_section)
+                    section = Section.objects.get(id=id_section)
                     object.section = section
-                    #object.save()
+                    object.save()
                 except Supplier.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
             if 'product_id' in request.POST:
@@ -103,12 +103,12 @@ def update_object(request):
             if 'discontinued' in request.POST:
                 object.discontinued = request.POST.get('discontinued')
             if any(key in request.POST for key in ['length', 'height', 'width']):
-                volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height)
+                volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height) * Decimal(object.stock)
                 objects = Object.objects.filter(section=object.section.id).exclude(id=object.id)
                 section = Section.objects.get(id=object.section.id)
                 total_volume = 0
                 for obj in objects:
-                    total_volume = total_volume + (obj.height * obj.length * obj.width)
+                    total_volume = total_volume + (obj.height * obj.length * obj.width * obj.stock)
                 available_storage = (section.height * section.width * section.length) - total_volume
                 if available_storage < volume:
                     return JsonResponse({'success': True, 'message': 'There is not enough space in the section for this object'})
