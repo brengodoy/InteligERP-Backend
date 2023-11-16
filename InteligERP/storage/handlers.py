@@ -178,9 +178,12 @@ def delete_section(request):
         id = request.GET.get('id')
         try:
             section = Section.objects.get(id=id)
-            #objects = Object.objects.filter() falta decidir que hacemos al borrar una seccion que contiene objetos.
-            section.delete()
-            return JsonResponse({'success': True, 'message': 'Section deleted successfully'})
+            objects = Object.objects.filter(section=section) #falta decidir que hacemos al borrar una seccion que contiene objetos.
+            if not objects.exists():
+                section.delete()
+                return JsonResponse({'success': True, 'message': 'Section deleted successfully'})
+            else:
+                return JsonResponse({'success': False, 'message': 'You can not delete a section that contains objects.'})    
         except Section.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Section does not exist'})
     else:

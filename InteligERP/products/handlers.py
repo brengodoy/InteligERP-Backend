@@ -21,11 +21,14 @@ def create_object(request):
             volume = object_instance.height * object_instance.width * object_instance.length
             calculate_available_volume(section.id,True)
             if calculate_available_volume(section.id,True) < volume:
-                return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
+                return JsonResponse({'success': False, 'message': 'There is not enough space left in the section for this object'})
             else:
-                object_instance.save()
-                calculate_available_volume(section.id,False)
-                return JsonResponse({'success': True, 'message': 'Object created successfully'})
+                if calculate_available_weight(section) < object_instance.weight:
+                    object_instance.save()
+                    calculate_available_volume(section.id,False)
+                    return JsonResponse({'success': True, 'message': 'Object created successfully'})
+                else:
+                    return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -80,18 +83,6 @@ def update_object(request):
         id = request.GET.get('id')
         try:
             object = Object.objects.get(id=id)
-            if 'section' in request.POST:
-                try:
-                    id_section = request.POST.get('section')
-                    section = Section.objects.get(id=id_section)
-                    object.section = section
-                    object.save()
-                except Supplier.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
-            if 'product_id' in request.POST:
-                object.product_id = request.POST.get('product_id')
-            if 'name' in request.POST:
-                object.name = request.POST.get('name')
             if 'length' in request.POST:
                 object.length = request.POST.get('length')
             if 'width' in request.POST:
@@ -99,22 +90,45 @@ def update_object(request):
             if 'height' in request.POST:
                 object.height = request.POST.get('height')
             if 'weight' in request.POST:
-                object.weight = request.POST.get('weight')        
-            if 'discontinued' in request.POST:
-                object.discontinued = request.POST.get('discontinued')
-            if any(key in request.POST for key in ['length', 'height', 'width']):
+                object.weight = request.POST.get('weight')
+                #if calculate_available_weight(obj    
+            if 'section' in request.POST:
+                try:
+                    id_section = request.POST.get('section')
+                    new_section = Section.objects.get(id=id_section)
+                    volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height) * Decimal(object.stock)
+                    if calculate_available_volume(new_section,True) < volume:
+                        return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
+                    else:
+                        if calculate_available_weight(new_section) < object.weight:
+                            old_section = object.section
+                            object.section = new_section
+                            object.save()
+                            calculate_available_volume(old_section,False)
+                            calculate_available_volume(new_section,False)
+                        else:
+                            return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                except Section.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
+            elif any(key in request.POST for key in ['length', 'height', 'width']):
                 volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height) * Decimal(object.stock)
                 objects = Object.objects.filter(section=object.section.id).exclude(id=object.id)
-                section = Section.objects.get(id=object.section.id)
+                section = object.section
                 total_volume = 0
                 for obj in objects:
                     total_volume = total_volume + (obj.height * obj.length * obj.width * obj.stock)
                 available_storage = (section.height * section.width * section.length) - total_volume
                 if available_storage < volume:
-                    return JsonResponse({'success': True, 'message': 'There is not enough space in the section for this object'})
+                    return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
                 else:
                     object.save()
-                    calculate_available_volume(object.section.id,False)
+                    calculate_available_volume(section,False)
+            if 'product_id' in request.POST:
+                object.product_id = request.POST.get('product_id')
+            if 'name' in request.POST:
+                object.name = request.POST.get('name')        
+            if 'discontinued' in request.POST:
+                object.discontinued = request.POST.get('discontinued')
             object.save()
             return JsonResponse({'success': True, 'message': 'Object updated successfully'})
         except Object.DoesNotExist:
@@ -197,3 +211,9 @@ def delete_price(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
+def calculate_available_weight(section):
+    objects_inside = Object.objects.filter(section=section)
+    weight = 0
+    for obj in objects_inside:
+        weight = weight + obj.weight * obj.stock
+    return weight

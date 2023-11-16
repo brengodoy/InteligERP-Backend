@@ -98,13 +98,13 @@ def create_sale_object(request):
         form = CreateSaleObjectForm(request.POST)
         if form.is_valid():
             sale_object = form.save(commit=False)
-            if sale_object.object.discontinued == False:
-                form.save()
-                calculate_stock(sale_object.object.id)
-                calculate_available_volume(sale_object.object.section.id,False)
-                return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
-            else:
-                return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
+            #if sale_object.object.discontinued == False:
+            form.save()
+            calculate_stock(sale_object.object.id)
+            calculate_available_volume(sale_object.object.section.id,False)
+            return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
+            #else:
+            #    return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -159,22 +159,25 @@ def update_sale_object(request):
                 except Sale.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The sale entered does not exist.'})
             if 'amount' in request.POST and 'object' in request.POST:
-                id_object = request.POST.get('object')
-                old_object_id = sale_object.object.id
-                object = Object.objects.get(id=id_object)
-                if object.discontinued == False:
-                    sale_object.object = object
-                    sale_object.amount = request.POST.get('amount')
+                try:
+                    id_object = request.POST.get('object')
+                    old_object_id = sale_object.object.id
+                    new_object = Object.objects.get(id=id_object)
+                    #if object.discontinued == False:
+                    sale_object.object = new_object
+                    sale_object.amount = request.POST.get('amount') #vamos a validar que haya stock?
                     sale_object.save()
                     calculate_stock(id_object)
                     calculate_stock(old_object_id)
-                else:
-                    return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
+                    """else:
+                        return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})"""
+                except Object.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
             else:
                 if 'amount' in request.POST:
-                    sale_object.amount = request.POST.get('amount')
-                    sale_object.object.stock = Decimal(sale_object.object.stock) - Decimal(sale_object.amount)
-                    sale_object.object.save() 
+                    sale_object.amount = request.POST.get('amount') #vamos a verificar que haya stock?
+                    #sale_object.object.stock = Decimal(sale_object.object.stock) - Decimal(sale_object.amount)
+                    #sale_object.object.save() 
                     sale_object.save()
                     calculate_stock(sale_object.object.id)
                 if 'object' in request.POST:
@@ -182,13 +185,13 @@ def update_sale_object(request):
                         id_object = request.POST.get('object')
                         object = Object.objects.get(id=id_object)
                         old_object_id = sale_object.object.id
-                        if object.discontinued == False:
-                            sale_object.object = object
-                            sale_object.save()
-                            calculate_stock(id_object)
-                            calculate_stock(old_object_id)
-                        else:
-                            return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
+                        #if object.discontinued == False:
+                        sale_object.object = object #vamos a verificar que haya stock?
+                        sale_object.save()
+                        calculate_stock(id_object)
+                        calculate_stock(old_object_id)
+                        """else:
+                            return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})"""
                     except Object.DoesNotExist:
                         return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})      
             sale_object.save()
@@ -368,7 +371,9 @@ def update_purchase_object(request):
         id_purchase_object = request.GET.get('id_purchase_object')
         try:
             purchase_object = Purchase_object.objects.get(id=id_purchase_object)
-            if 'amount' in request.POST:
+            if purchase_object.object.discontinued == True:
+                return JsonResponse({'success': False, 'message': 'You can not update a purchase_object where the object is discontinued.'})
+            elif 'amount' in request.POST:
                 purchase_object.amount = request.POST.get('amount')
                 purchase_object.save()
                 calculate_stock(purchase_object.object.id)
