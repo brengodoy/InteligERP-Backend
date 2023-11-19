@@ -1,4 +1,3 @@
-import logging
 from django.http import JsonResponse
 from storage.models import Warehouse,Section
 from storage.forms import CreateWarehouseForm,CreateSectionForm
@@ -8,14 +7,11 @@ from django.shortcuts import redirect
 import yaml, json
 from decimal import Decimal
 
-logger = logging.getLogger(__name__)
-
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
     LINK = yaml.safe_load(yaml_file).get('default')['LINK']
 
 def create_warehouse(request):
-    print(f'Received POST request with data: {request.POST}')
     if request.method == 'POST':
         form = CreateWarehouseForm(request.POST)
         if form.is_valid():
