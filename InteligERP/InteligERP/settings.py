@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',  # Agrega los dominios permitidos aquí
+    'https://intelig-erp-frontend.vercel.app'
 ]
 
 MIDDLEWARE = [
