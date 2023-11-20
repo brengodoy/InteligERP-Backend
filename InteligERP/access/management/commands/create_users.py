@@ -5,8 +5,11 @@ class Command(BaseCommand):
     help = 'Crea usuarios de prueba'
 
     def handle(self, *args, **kwargs):
-        usuario = User.objects.get(username='tinchoabc')
-        usuario.delete()
+        usuario = User.objects.filter(username='tinchoabc').first()
+    
+        if usuario:
+            usuario.delete()
+            
         User.objects.create_user(
             'tinchoabc', 'mb@mail.com', 'tincho123',
             is_superuser=1, first_name='Martin', last_name='Ballestero'
