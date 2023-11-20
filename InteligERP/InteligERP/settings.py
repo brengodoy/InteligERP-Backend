@@ -89,7 +89,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'InteligERP.wsgi.application'
+WSGI_APPLICATION = 'wsgi.application'
 
 
 # Database
