@@ -12,4 +12,4 @@
 
 - Para crear usuarios de manera automática correr el comando `python manage.py create_users`.
 Los usuarios a crear (posteriormente a la eliminación si correspondiera) se pueden editar en `management/commands/create_users.py`.
-Funciona de la misma manera con `python manage.py create_datawarehouses`.
+Funciona de la misma manera con `python manage.py create_datawarehouses` y `python manage.py create_products`.
