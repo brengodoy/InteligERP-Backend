@@ -195,14 +195,17 @@ def calculate_available_volume(section_id,send_back):
     if isinstance(section_id,Section):
         section = section_id
     else:
-        section = Section.objects.get(id=section_id)
+        try:
+            section = Section.objects.get(id=section_id)
+        except Section.DoesNotExist:
+            raise Exception('The seccion does not exist')   
     total_volume = 0
     for object in objects:
         if object.stock > 0:
             total_volume = total_volume + (Decimal(object.height) * Decimal(object.length) * Decimal(object.width) * Decimal(object.stock))
     available = (Decimal(section.height) * Decimal(section.width) * Decimal(section.length)) - Decimal(total_volume)
     if available < 0:
-        raise Exception('No hay espacio disponible')
+        raise Exception('There is not enough space in the section.')
     else:
         section.available_storage = available
 
@@ -210,3 +213,11 @@ def calculate_available_volume(section_id,send_back):
         return section.available_storage
     else:
         section.save()
+
+def calculate_available_weight(section):
+    objects_inside = Object.objects.filter(section=section)
+    weight = 0
+    for obj in objects_inside:
+        weight = weight + obj.weight * obj.stock
+    available = section.max_weight - weight
+    return available

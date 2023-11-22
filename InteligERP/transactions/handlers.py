@@ -7,7 +7,7 @@ from django.db.utils import IntegrityError
 from products.models import Price
 from django.db.models import Sum
 from decimal import Decimal
-from storage.handlers import calculate_available_volume
+from storage.handlers import calculate_available_volume,calculate_available_weight
 
 # Read YAML configuration file
 with open('config.yaml', 'r') as yaml_file:
@@ -304,14 +304,40 @@ def create_purchase_object(request):
         if form.is_valid():
             purchase_object = form.save(commit=False)
             if purchase_object.object.discontinued == False:
-                purchase = Purchase.objects.get(id=request.POST.get('purchase'))
-                object = Object.objects.get(id=request.POST.get('object'))
-                price = Price.objects.filter(object=object.id, supplier=purchase.supplier.id, date__lt=purchase.date).order_by('-date').first()
-                purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
-                purchase_object.save()
-                calculate_total_cost(purchase.id)
-                calculate_stock(object.id)
-                calculate_available_volume(object.section.id,False)
+                try:
+                    purchase = Purchase.objects.get(id=request.POST.get('purchase'))
+                    object = Object.objects.get(id=request.POST.get('object'))
+                    price = Price.objects.filter(object=object.id, supplier=purchase.supplier.id, date__lt=purchase.date).order_by('-date').first()
+                    volume_objects = purchase_object.amount * (object.length * object.width * object.height)
+                    weight_objects = purchase_object.amount * object.weight
+                    if calculate_available_volume(object.section.id,True) > volume_objects:
+                        if object.section.max_weight is not None:
+                            if calculate_available_weight(object.section) > weight_objects:
+                                if price is not None:
+                                    purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
+                                    purchase_object.save()
+                                    calculate_total_cost(purchase.id)
+                                    calculate_stock(object.id)
+                                    calculate_available_volume(object.section.id,False)
+                                else:
+                                    return JsonResponse ({'success': False, 'message': 'The object entered does not has a price.'})
+                            else:
+                                return JsonResponse ({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                        else:
+                            if price is not None:
+                                purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
+                                purchase_object.save()
+                                calculate_total_cost(purchase.id)
+                                calculate_stock(object.id)
+                                calculate_available_volume(object.section.id,False)
+                            else:
+                                return JsonResponse ({'success': False, 'message': 'The object entered does not has a price.'})
+                    else:
+                        return JsonResponse ({'success': False, 'message': 'There is not enough space in the section.'})
+                except Purchase.DoesNotExist:
+                    return JsonResponse ({'success': False, 'message': 'The purchase entered does not exist.'})
+                except Object.DoesNotExist:
+                    return JsonResponse ({'success': False, 'message': 'The object entered does not exist.'})
             else:
                 return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})
             return JsonResponse({'success': True, 'message': 'Purchase_object created successfully'})
@@ -374,12 +400,38 @@ def update_purchase_object(request):
             if purchase_object.object.discontinued == True:
                 return JsonResponse({'success': False, 'message': 'You can not update a purchase_object where the object is discontinued.'})
             elif 'amount' in request.POST:
-                purchase_object.amount = request.POST.get('amount')
-                purchase_object.save()
-                calculate_stock(purchase_object.object.id)
-                calculate_price(id_purchase_object,request.POST.get('amount'))
-                calculate_available_volume(purchase_object.object.section.id,False)
-            return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
+                #tengo que ver si hay espacio para la DIFERENCIA entre el peso y volumen anterior y el actual, pq para la creacion si lo permitio
+                amount_dif = purchase_object.amount - Decimal(request.POST.get('amount')) 
+                if amount_dif < 0:  #significa que esta agregando objetos
+                    #validar que entre por el espacio
+                    if purchase_object.object.section.available_storage > (purchase_object.object.length * purchase_object.object.width * purchase_object.object.height) * (-(amount_dif)):
+                        if purchase_object.object.section.max_weight is None:
+                            purchase_object.amount = request.POST.get('amount')
+                            purchase_object.save()
+                            calculate_stock(purchase_object.object.id)
+                            calculate_price(id_purchase_object,request.POST.get('amount'))
+                            calculate_available_volume(purchase_object.object.section.id,False)
+                            return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
+                        else:
+                            #valido que entre por el peso
+                            if calculate_available_weight(purchase_object.object.section) > purchase_object.object.weight * (-(amount_dif)):
+                                purchase_object.amount = request.POST.get('amount')
+                                purchase_object.save()
+                                calculate_stock(purchase_object.object.id)
+                                calculate_price(id_purchase_object,request.POST.get('amount'))
+                                calculate_available_volume(purchase_object.object.section.id,False)
+                                return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
+                            else:
+                                return JsonResponse ({'success': False, 'message': 'There is not enough weight left in the section.'})
+                    else:
+                        return JsonResponse ({'success': False, 'message': 'There is not enough space left in the section.'})
+                else:   #si esta quitando objetos entonces sabemos que entra si o si y no hace falta validar.
+                    purchase_object.amount = request.POST.get('amount')
+                    purchase_object.save()
+                    calculate_stock(purchase_object.object.id)
+                    calculate_price(id_purchase_object,request.POST.get('amount'))
+                    calculate_available_volume(purchase_object.object.section.id,False)
+                    return JsonResponse({'success': True, 'message': 'Purchase_object updated successfully'})
         except Purchase_object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Purchase_object does not exist'})
     else:

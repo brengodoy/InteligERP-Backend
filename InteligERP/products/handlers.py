@@ -4,7 +4,7 @@ from .forms import CreateObjectForm,CreatePriceForm
 import yaml,json
 from stakeholders.models import Supplier
 from django.db.models import Max
-from storage.handlers import calculate_available_volume
+from storage.handlers import calculate_available_volume,calculate_available_weight
 from decimal import Decimal
 from storage.models import Section
 
@@ -17,18 +17,24 @@ def create_object(request):
         form = CreateObjectForm(request.POST)
         if form.is_valid():
             object_instance = form.save(commit=False)
+            # en realidad no hace falta validar el espacio ni peso pq el stock al momento de crear el objeto es cero.
             section = object_instance.section
             volume = object_instance.height * object_instance.width * object_instance.length
-            calculate_available_volume(section.id,True)
+            #calculate_available_volume(section.id,True)
             if calculate_available_volume(section.id,True) < volume:
                 return JsonResponse({'success': False, 'message': 'There is not enough space left in the section for this object'})
             else:
-                if calculate_available_weight(section) < object_instance.weight:
+                if section.max_weight is not None:
+                    if calculate_available_weight(section) > object_instance.weight:
+                        object_instance.save()
+                        calculate_available_volume(section.id,False)
+                        return JsonResponse({'success': True, 'message': 'Object created successfully'})
+                    else:
+                        return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                else:
                     object_instance.save()
                     calculate_available_volume(section.id,False)
                     return JsonResponse({'success': True, 'message': 'Object created successfully'})
-                else:
-                    return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -89,25 +95,50 @@ def update_object(request):
                 object.width = request.POST.get('width')
             if 'height' in request.POST:
                 object.height = request.POST.get('height')
-            if 'weight' in request.POST:
-                object.weight = request.POST.get('weight')
-                #if calculate_available_weight(obj    
+            if 'weight' in request.POST and 'section' in request.POST:
+                try:
+                    new_section = Section.objects.get(id=request.POST.get('section'))
+                    object.weight = request.POST.get('weight')
+                    total_weight = Decimal(object.weight) * Decimal(object.stock)
+                    if calculate_available_weight(new_section) < Decimal(total_weight):
+                        return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                except Section.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
+            elif 'weight' in request.POST:
+                #debo excluir el objeto actual
+                objects_inside = Object.objects.filter(section=object.section).exclude(id=object.id)
+                weight = 0
+                for obj in objects_inside:
+                    weight = weight + obj.weight * obj.stock
+                available = object.section.max_weight - weight
+                if available < Decimal(request.POST.get('weight')):
+                    return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                else:
+                    object.weight = request.POST.get('weight')
             if 'section' in request.POST:
                 try:
-                    id_section = request.POST.get('section')
-                    new_section = Section.objects.get(id=id_section)
+                    #id_section = request.POST.get('section')
+                    new_section = Section.objects.get(id=request.POST.get('section'))
                     volume = Decimal(object.length) * Decimal(object.width) * Decimal(object.height) * Decimal(object.stock)
                     if calculate_available_volume(new_section,True) < volume:
                         return JsonResponse({'success': False, 'message': 'There is not enough space in the section for this object'})
                     else:
-                        if calculate_available_weight(new_section) < object.weight:
+                        total_weight = Decimal(object.weight) * Decimal(object.stock)
+                        if new_section.max_weight is not None:    
+                            if calculate_available_weight(new_section) > Decimal(total_weight):
+                                old_section = object.section
+                                object.section = new_section
+                                object.save()
+                                calculate_available_volume(old_section,False)
+                                calculate_available_volume(new_section,False)
+                            else:
+                                return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
+                        else:
                             old_section = object.section
                             object.section = new_section
                             object.save()
                             calculate_available_volume(old_section,False)
                             calculate_available_volume(new_section,False)
-                        else:
-                            return JsonResponse({'success': False, 'message': 'There is not enough weight left in the section for this object'})
                 except Section.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
             elif any(key in request.POST for key in ['length', 'height', 'width']):
@@ -210,10 +241,3 @@ def delete_price(request):
             return JsonResponse({'success': False, 'message': 'Price does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
-def calculate_available_weight(section):
-    objects_inside = Object.objects.filter(section=section)
-    weight = 0
-    for obj in objects_inside:
-        weight = weight + obj.weight * obj.stock
-    return weight
