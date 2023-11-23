@@ -21,6 +21,7 @@ from stakeholders import handlers as stakeholders
 from storage import handlers as storage
 from products import handlers as objects
 from transactions import handlers as transactions
+from dashboards import handlers as dashboards
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -95,4 +96,5 @@ urlpatterns = [
 	path('update-company/', access.update_company, name='update-company'),
 	path('delete-company/', access.delete_company, name='delete-company'),	
 
+	path('create-dashboard/', dashboards.create_dashboard, name='create-dashboard'),
 ]
