@@ -13,6 +13,11 @@ de la base de datos, así como para realizar operaciones
 CRUD (crear, leer, actualizar, eliminar) en los datos.
 """
 
+class Role(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
@@ -22,6 +27,7 @@ class User(AbstractUser):
     user_permissions = models.ManyToManyField(
         Permission, related_name='custom_user_set'
     )
+    role = models.ForeignKey(Role, on_delete=models.PROTECT,default=1)    #ojo, si borro un UserProfile no quiero borrar el rol.
 
     def get_info(self):
         return {'name': self.first_name, 'email': self.email,

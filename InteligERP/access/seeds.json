@@ -1,0 +1,16 @@
+[
+    {
+        "model": "access.Role",
+        "pk": 1,
+        "fields": {
+          "name": "Superusuario"
+        }
+    },
+	{
+        "model": "access.Role",
+        "pk": 2,
+        "fields": {
+          "name": "Usuario Estándar"
+        }
+    }
+]

@@ -9,10 +9,11 @@ from django.contrib.auth import authenticate
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(max_length=200, help_text='Required')
     username = forms.CharField(max_length=30)
+    role = forms.CharField(required=False)
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password1', 'password2', 'username']
+        fields = ['first_name', 'last_name', 'email', 'password1', 'password2', 'username','role']
 
     def clean_email(self):
         email = self.cleaned_data['email']

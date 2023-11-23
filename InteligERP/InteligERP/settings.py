@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'products',
     'transactions',
     'dashboards',
+    #'django_seed',
 ]
 
 CORS_ALLOWED_ORIGINS = [
