@@ -98,13 +98,13 @@ def create_sale_object(request):
         form = CreateSaleObjectForm(request.POST)
         if form.is_valid():
             sale_object = form.save(commit=False)
-            #if sale_object.object.discontinued == False:
-            form.save()
-            calculate_stock(sale_object.object.id)
-            calculate_available_volume(sale_object.object.section.id,False)
-            return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
-            #else:
-            #    return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})            
+            if (calculate_stock(sale_object.object.id,True)-sale_object.amount) >= 0:
+                form.save()
+                calculate_stock(sale_object.object.id,False)
+                calculate_available_volume(sale_object.object.section.id,False)
+                return JsonResponse({'success': True, 'message': 'Sale_object created successfully'})
+            else:
+                return JsonResponse({'success': False, 'message': 'There is not enough stock to make this sale.'})           
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
@@ -160,38 +160,50 @@ def update_sale_object(request):
                     return JsonResponse({'success': False, 'message': 'The sale entered does not exist.'})
             if 'amount' in request.POST and 'object' in request.POST:
                 try:
+                    #validar que haya stock
                     id_object = request.POST.get('object')
                     old_object_id = sale_object.object.id
                     new_object = Object.objects.get(id=id_object)
-                    #if object.discontinued == False:
-                    sale_object.object = new_object
-                    sale_object.amount = request.POST.get('amount') #vamos a validar que haya stock?
-                    sale_object.save()
-                    calculate_stock(id_object)
-                    calculate_stock(old_object_id)
-                    """else:
-                        return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})"""
+                    if calculate_stock(id_object,True) - Decimal(request.POST.get('amount')) >= 0:
+                        sale_object.object = new_object
+                        sale_object.amount = request.POST.get('amount')
+                        sale_object.save()
+                        calculate_stock(id_object,False)
+                        calculate_stock(old_object_id,False)
+                    else:
+                        return JsonResponse({'success': False, 'message': 'There is not enough stock.'})
                 except Object.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})
             else:
                 if 'amount' in request.POST:
-                    sale_object.amount = request.POST.get('amount') #vamos a verificar que haya stock?
-                    #sale_object.object.stock = Decimal(sale_object.object.stock) - Decimal(sale_object.amount)
-                    #sale_object.object.save() 
-                    sale_object.save()
-                    calculate_stock(sale_object.object.id)
+                    #tengo que ver la diferencia entre la cantidad anterior y la actual
+                    amount_dif = sale_object.amount - Decimal(request.POST.get('amount'))
+                    if amount_dif < 0: #si es negativo esta agregando objetos por lo q hay q validar si alcanza el stock
+                        if calculate_stock(sale_object.object.id,True) - Decimal(request.POST.get('amount')) >= 0:
+                            sale_object.amount = request.POST.get('amount') #vamos a verificar que haya stock?
+                            #sale_object.object.stock = Decimal(sale_object.object.stock) - Decimal(sale_object.amount)
+                            #sale_object.object.save() 
+                            sale_object.save()
+                            calculate_stock(sale_object.object.id,False)
+                        else:
+                            return JsonResponse({'success': False, 'message': 'There is not enough stock.'})
+                    else:   #no hace falta validar el stock pq pone menos cantidad
+                        sale_object.amount = request.POST.get('amount') #vamos a verificar que haya stock?
+                        sale_object.save()
+                        calculate_stock(sale_object.object.id,False)
                 if 'object' in request.POST:
                     try:
+                        #validar stock
                         id_object = request.POST.get('object')
                         object = Object.objects.get(id=id_object)
                         old_object_id = sale_object.object.id
-                        #if object.discontinued == False:
-                        sale_object.object = object #vamos a verificar que haya stock?
-                        sale_object.save()
-                        calculate_stock(id_object)
-                        calculate_stock(old_object_id)
-                        """else:
-                            return JsonResponse({'success': False, 'message': 'The object entered is discontinued.'})"""
+                        if calculate_stock(id_object,True) - sale_object.amount >= 0:
+                            sale_object.object = object #vamos a verificar que haya stock?
+                            sale_object.save()
+                            calculate_stock(id_object,False)
+                            calculate_stock(old_object_id,False)
+                        else:
+                            return JsonResponse({'success': False, 'message': 'There is not enough stock.'})
                     except Object.DoesNotExist:
                         return JsonResponse({'success': False, 'message': 'The object entered does not exist.'})      
             sale_object.save()
@@ -317,7 +329,7 @@ def create_purchase_object(request):
                                     purchase_object.price = Decimal(purchase_object.amount) * Decimal(price.price)
                                     purchase_object.save()
                                     calculate_total_cost(purchase.id)
-                                    calculate_stock(object.id)
+                                    calculate_stock(object.id,False)
                                     calculate_available_volume(object.section.id,False)
                                 else:
                                     return JsonResponse ({'success': False, 'message': 'The object entered does not has a price.'})
@@ -469,7 +481,7 @@ def calculate_price(id_purchase_object,amount):
     purchase_object.save()
     calculate_total_cost(purchase.id)
     
-def calculate_stock(id_object):
+def calculate_stock(id_object,send_back):
     object = Object.objects.get(id=id_object)
     purchase_objects = Purchase_object.objects.filter(object=object)
     sale_objects = Sale_object.objects.filter(object=object)
@@ -479,5 +491,9 @@ def calculate_stock(id_object):
         acquired = acquired + purchase_object.amount
     for sale_object in sale_objects:
         sold = sold + sale_object.amount
-    object.stock = acquired - sold
-    object.save()
+    stock = acquired - sold
+    if send_back:
+        return stock
+    else:
+        object.stock = stock
+        object.save()
