@@ -6,7 +6,8 @@
 2. Activar entorno virtual `source ./.venv/bin/activate`
 3. Instalar requerimientos `pip install -r requirements.txt`
 4. Posicionarse en la carpeta del proyecto de Django `cd ./InteligERP`
-5. Iniciar proceso `python manage.py runserver`
+5. Crear los roles 'python manage.py loaddata .\access\seeds.json'
+6. Iniciar proceso `python manage.py runserver`
 
 ## Tips
 
