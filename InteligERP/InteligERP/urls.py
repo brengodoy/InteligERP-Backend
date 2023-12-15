@@ -95,6 +95,9 @@ urlpatterns = [
 	path('get-all-company/', access.get_all_company, name='get-all-company'),
 	path('update-company/', access.update_company, name='update-company'),
 	path('delete-company/', access.delete_company, name='delete-company'),	
+	
+    path('get-role/', access.get_role, name='get-role'),
+	path('get-all-role/', access.get_all_role, name='get-all-role'),
 
 	path('create-dashboard/', dashboards.create_dashboard, name='create-dashboard'),
 ]

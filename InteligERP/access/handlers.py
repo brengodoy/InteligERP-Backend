@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from .models import User,Company
+from .models import User,Company,Role
 from access.forms import RegisterForm, LoginForm, CreateCompanyForm
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -111,6 +111,7 @@ def adm_blank_password(request):
     user.save()
     return JsonResponse({'success': True, 'message': 'Password updated successfully'})
 
+@token_required
 def create_company(request):
     if request.method == 'POST':
         form = CreateCompanyForm(request.POST)
@@ -173,5 +174,28 @@ def delete_company(request):
             return JsonResponse({'success': True, 'message': 'Company deleted successfully'})
         except Company.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Company does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+def get_role(request):   
+    if request.method == 'GET':
+        id = request.GET.get('id')
+        try:
+            role = Role.objects.get(id=id)
+            return JsonResponse({'id':role.id,
+                                 'name': role.name})
+        except Role.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Role does not exist'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+def get_all_role(request):
+    if request.method == 'GET':
+        roles = Role.objects.all()
+        roles_list = []
+        for role in roles:
+            roles_list.append({'id':role.id,
+                                 'name': role.name})
+        return JsonResponse({'roles': roles_list})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})

@@ -38,9 +38,9 @@ def create_object(request):
         else:
             errors = form.errors.as_json()
             error_dict = json.loads(errors) # Convertir JSON a un diccionario de Python
-            if 'product_id' in error_dict:
-                return JsonResponse({'success': False, 'message': 'The product_id entered already exist.'})
-            elif 'section' in error_dict:
+            #if 'product_id' in error_dict:
+                #return JsonResponse({'success': False, 'message': 'The product_id entered already exist.'})
+            if 'section' in error_dict:
                 return JsonResponse({'success': False, 'message': 'The section entered does not exist.'})
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid form data', 'errors': errors})
@@ -53,14 +53,15 @@ def get_object(request):
         try:
             object = Object.objects.get(id=id)
             return JsonResponse({'id':object.id,
-                                 'product_id': object.product_id,
+                                 #'product_id': object.product_id,
                                  'name': object.name,
                                  'height': object.height,
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
                                  'section': object.section.id,
-                                 'discontinued': object.discontinued})
+                                 'discontinued': object.discontinued,
+                                 'stock': object.stock})
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
     else:
@@ -72,14 +73,15 @@ def get_all_objects(request):
         object_list = []
         for object in objects:
             object_list.append({'id':object.id,
-                                 'product_id': object.product_id,
+                                 #'product_id': object.product_id,
                                  'name': object.name,
                                  'height': object.height,
                                  'length': object.length,
                                  'width': object.width,
                                  'weight': object.weight,
                                  'section': object.section.id,
-                                 'discontinued': object.discontinued})
+                                 'discontinued': object.discontinued,
+                                 'stock': object.stock})
         return JsonResponse({'objects': object_list})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -154,8 +156,8 @@ def update_object(request):
                 else:
                     object.save()
                     calculate_available_volume(section,False)
-            if 'product_id' in request.POST:
-                object.product_id = request.POST.get('product_id')
+            #if 'product_id' in request.POST:
+                #object.product_id = request.POST.get('product_id')
             if 'name' in request.POST:
                 object.name = request.POST.get('name')        
             if 'discontinued' in request.POST:
