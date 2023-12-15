@@ -29,8 +29,8 @@ def update_warehouse(request):
         id = request.GET.get('id')
         try:
             warehouse = Warehouse.objects.get(id=id)
-            if 'id_warehouse' in request.POST:
-                warehouse.id_warehouse = request.POST.get('id_warehouse')
+            #if 'id_warehouse' in request.POST:
+                #warehouse.id_warehouse = request.POST.get('id_warehouse')
             if 'name' in request.POST:
                 warehouse.name = request.POST.get('name')
             if 'address' in request.POST:
