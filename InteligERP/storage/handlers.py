@@ -115,7 +115,8 @@ def get_section(request):
                                  'length': section.length,
                                  'width': section.width,
                                  'max_weight': section.max_weight,
-                                 'description': section.description})
+                                 'description': section.description,
+                                 'available_storage': section.available_storage})
         except Section.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Section does not exist'})
     else:
@@ -133,11 +134,30 @@ def get_all_sections(request):
                                  'length': section.length,
                                  'width': section.width,
                                  'max_weight': section.max_weight,
-                                 'description': section.description})
+                                 'description': section.description,
+                                 'available_storage': section.available_storage})
         return JsonResponse({'sections': section_list})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
+def get_all_sections_from_warehouse(request):
+    if request.method == 'GET':
+        sections = Section.objects.filter(warehouse=request.GET.get('id_warehouse'))
+        section_list = []
+        for section in sections:
+            section_list.append({'id':section.id,
+                                 'warehouse': section.warehouse.id,
+                                 'id_section': section.id_section,
+                                 'height': section.height,
+                                 'length': section.length,
+                                 'width': section.width,
+                                 'max_weight': section.max_weight,
+                                 'description': section.description,
+                                 'available_storage': section.available_storage})
+        return JsonResponse({'sections': section_list})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
 def update_section(request):
     if request.method == 'POST':
         id = request.GET.get('id')
@@ -179,8 +199,12 @@ def delete_section(request):
         id = request.GET.get('id')
         try:
             section = Section.objects.get(id=id)
-            objects = Object.objects.filter(section=section) #falta decidir que hacemos al borrar una seccion que contiene objetos.
+            objects = Object.objects.filter(section=section)
+            #BG: valido q si hay objectos entonces que esos objetos tengan stock 0, caso contrario no borrar.
             if not objects.exists():
+                section.delete()
+                return JsonResponse({'success': True, 'message': 'Section deleted successfully'})
+            elif all(obj.stock == 0 for obj in objects):
                 section.delete()
                 return JsonResponse({'success': True, 'message': 'Section deleted successfully'})
             else:

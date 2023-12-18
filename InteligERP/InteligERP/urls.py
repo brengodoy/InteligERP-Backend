@@ -53,6 +53,7 @@ urlpatterns = [
     path('create-section/', storage.create_section, name='create-section'),
 	path('get-section/', storage.get_section, name='get-section'),
 	path('get-all-sections/', storage.get_all_sections, name='get-all-sections'),
+	path('get-all-sections-from-warehouse/', storage.get_all_sections_from_warehouse, name='get-all-sections-from-warehouse'),
 	path('update-section/', storage.update_section, name='update-section'),
 	path('delete-section/', storage.delete_section, name='delete-section'),
 	
