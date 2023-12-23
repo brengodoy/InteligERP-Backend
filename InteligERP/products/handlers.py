@@ -72,6 +72,8 @@ def get_all_objects(request):
         objects = Object.objects.all()
         object_list = []
         for object in objects:
+            lastest_price = Price.objects.filter(object=object).order_by('-date').first()
+            price_value = lastest_price.price if lastest_price else None
             object_list.append({'id':object.id,
                                  #'product_id': object.product_id,
                                  'name': object.name,
@@ -81,7 +83,9 @@ def get_all_objects(request):
                                  'weight': object.weight,
                                  'section': object.section.id,
                                  'discontinued': object.discontinued,
-                                 'stock': object.stock})
+                                 'stock': object.stock,
+                                 'price': price_value
+                                 })
         return JsonResponse({'objects': object_list})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -201,6 +205,7 @@ def create_price(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
+#trae los precios de los suppliers que le pase por parametro, si no pasan ningun supplier trae todos los ultimos precios de cada supplier
 def get_price(request):
     if request.method == 'GET':
         id_object = request.GET.get('id_object')
@@ -226,15 +231,15 @@ def get_price(request):
                     'currency': latest_price.currency,
                     'supplier': latest_price.supplier.id
                 })
-            return JsonResponse(price_data, safe=False)
+            return JsonResponse({'prices':price_data}, safe=False)
         except Object.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Object does not exist'})
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def delete_price(request):
-    if request.method == 'POST':
-        id = request.POST.get('id')
+    if request.method == 'DELETE':
+        id = request.GET.get('id')
         try:
             price = Price.objects.get(id=id)
             price.delete()
